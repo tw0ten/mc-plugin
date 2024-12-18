@@ -1,0 +1,2 @@
+# mineserv
+plugin for fun
