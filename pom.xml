@@ -3,6 +3,10 @@
 	<groupId>main</groupId>
 	<version>0.0.0</version>
 
+	<build>
+		<directory>io/o/target</directory>
+	</build>
+
 	<repositories>
 		<repository>
 			<id>papermc</id>
@@ -20,13 +24,4 @@
 	</dependencies>
 
 	<modelVersion>4.0.0</modelVersion>
-
-	<profiles>
-	<profile>
-		<id>main</id>
-		<build>
-			<directory>io/o/target</directory>
-		</build>
-	</profile>
-	</profiles>
 </project>

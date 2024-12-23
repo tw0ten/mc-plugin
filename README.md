@@ -1,2 +1,2 @@
-# mineserv
-plugin for fun
+# mc-plugin
+minecraft plugin
