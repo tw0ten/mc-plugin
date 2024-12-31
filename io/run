@@ -3,6 +3,9 @@ set -e
 cd io
 
 cd i
-java -Xms2G -Xmx4G \
+[ -f server.jar ] || exec $BROWSER 'https://www.minecraft.net/en-us/download/server'
+
+exec java \
+	-Xms2G -Xmx4G \
 	-jar server.jar \
-	--nogui
+	nogui
