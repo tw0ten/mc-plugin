@@ -5,7 +5,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BookMeta.Generation;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.Style;
@@ -14,28 +13,25 @@ import net.kyori.adventure.text.format.TextDecoration;
 
 public class Book {
 	private final String title, author, content;
-	public final ItemStack[] items;
 
 	public Book(final String title, final String author, final String content) {
 		this.title = title;
 		this.author = author;
 		this.content = content;
-		this.items = this.toItems();
 	}
 
 	private ItemStack defaultItem() {
-		final ItemStack i = new ItemStack(Material.WRITTEN_BOOK);
-		final BookMeta b = (BookMeta) i.getItemMeta();
+		final var i = new ItemStack(Material.WRITTEN_BOOK);
+		final var b = (BookMeta) i.getItemMeta();
 
 		b.setGeneration(Generation.TATTERED);
 
 		b.setAuthor(this.author);
 
-		for (int j = 0;; j++) {
+		for (var j = 0; !b.hasTitle(); j++)
 			b.setTitle(this.title.substring(0, this.title.length() - j));
-			if (b.hasTitle())
-				break;
-		}
+
+		b.lore(List.of(Book.lore(String.valueOf(content.length()))));
 
 		i.setItemMeta(b);
 		return i;
@@ -49,7 +45,7 @@ public class Book {
 		private final String content;
 
 		private static String chopWordBack(final String s) {
-			for (int j = s.length() - 1; j >= 0; j--)
+			for (var j = s.length() - 1; j >= 0; j--)
 				if (Character.isWhitespace(s.charAt(j)))
 					return s.substring(0, j + 1);
 			return s;
@@ -64,11 +60,10 @@ public class Book {
 
 		private static int lines(final String s) {
 			final String[] lines = s.split("\n");
-			int ls = lines.length;
-			for (final String l : lines) {
-				// !words
-				// !monospace
-				int ll = l.length() * 8; // avg
+			var ls = lines.length;
+			for (final var l : lines) {
+				// approximate
+				final var ll = l.length() * 8;
 				ls += (ll - 1) / max.width;
 			}
 			return ls;
@@ -84,52 +79,58 @@ public class Book {
 		}
 	}
 
-	interface max {
+	private interface max {
 		int pages = 100;
 	}
 
-	private ItemStack[] toItems() {
-		String s = this.content;
+	private static Component lore(final String s) {
+		return Component.text()
+				.content(s).style(
+						Style.style()
+								.decoration(TextDecoration.ITALIC, false)
+								.color(TextColor.color(0xaaaaaa)).build())
+				.build();
+	}
+
+	public ItemStack[] toItems() {
+		var s = this.content;
 		final List<ItemStack> books = new ArrayList<>();
 
 		while (s.length() > 0) {
-			Plugin.instance.getLogger().info(this.toString() + " " + s.length());
+			Plugin.instance.getLogger().info(this + " " + s.length());
 
-			final ItemStack b = defaultItem();
+			final var b = defaultItem();
 
 			final List<Component> pages = new ArrayList<>();
 			while (pages.size() < max.pages && s.length() > 0) {
-				final Page p = new Page(s.substring(0, Math.min(Page.max.chars, s.length())));
+				final var p = new Page(s.substring(0, Math.min(Page.max.chars, s.length())));
 				s = s.substring(p.toString().length());
 				pages.add(p.asComponent());
 			}
 
-			final BookMeta m = (BookMeta) b.getItemMeta();
+			final var m = (BookMeta) b.getItemMeta();
 			m.pages(pages);
 			b.setItemMeta(m);
 			books.add(b);
 		}
-		Plugin.instance.getLogger().info("new Book: " + this.toString());
 
-		if (books.size() > 1)
-			for (int j = 0; j < books.size(); j++) {
-				final ItemStack i = books.get(j);
-				final ItemMeta m = i.getItemMeta();
-				m.lore(List.of(Component.text()
-						.content((j + 1) + " / " + books.size()).style(
-								Style.style()
-										.decoration(TextDecoration.ITALIC, false)
-										.color(TextColor.color(0xaaaaaa)).build())
-						.build()));
-				i.setItemMeta(m);
-				books.set(j, i);
-			}
+		for (var j = 0; j < books.size(); j++) {
+			final var i = books.get(j);
+			final var m = i.getItemMeta();
+			final var lore = m.lore();
+			if (books.size() > 1)
+				lore.add(Book.lore((j + 1) + " / " + books.size()));
+			m.lore(lore);
+			i.setItemMeta(m);
+			books.set(j, i);
+		}
 
+		Plugin.instance.getLogger().info(this + " (" + books.size() + ")");
 		return books.toArray(ItemStack[]::new);
 	}
 
 	@Override
 	public String toString() {
-		return "\"" + this.title + "\" by " + this.author;
+		return "\"" + this.title + "\" - " + this.author;
 	}
 }
