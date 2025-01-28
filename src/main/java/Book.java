@@ -7,9 +7,6 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BookMeta.Generation;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.Style;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 
 public class Book {
 	private final String title, author, content;
@@ -31,7 +28,7 @@ public class Book {
 		for (var j = 0; !b.hasTitle(); j++)
 			b.setTitle(this.title.substring(0, this.title.length() - j));
 
-		b.lore(List.of(Book.lore(String.valueOf(content.length()))));
+		b.lore(List.of(Text.lore(String.valueOf(content.length()))));
 
 		i.setItemMeta(b);
 		return i;
@@ -83,15 +80,6 @@ public class Book {
 		int pages = 100;
 	}
 
-	private static Component lore(final String s) {
-		return Component.text()
-				.content(s).style(
-						Style.style()
-								.decoration(TextDecoration.ITALIC, false)
-								.color(TextColor.color(0xaaaaaa)).build())
-				.build();
-	}
-
 	public ItemStack[] toItems() {
 		var s = this.content;
 		final List<ItemStack> books = new ArrayList<>();
@@ -119,7 +107,7 @@ public class Book {
 			final var m = i.getItemMeta();
 			final var lore = m.lore();
 			if (books.size() > 1)
-				lore.add(Book.lore((j + 1) + " / " + books.size()));
+				lore.add(Text.lore((j + 1) + " / " + books.size()));
 			m.lore(lore);
 			i.setItemMeta(m);
 			books.set(j, i);
