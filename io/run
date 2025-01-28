@@ -3,7 +3,9 @@ set -e
 cd io
 
 cd i
-[ -f server.jar ] || exec $BROWSER 'https://www.minecraft.net/en-us/download/server'
+[ -f server.jar ] || exec $BROWSER \
+	'https://www.minecraft.net/en-us/download/server' \
+	'https://papermc.io/downloads/paper'
 
 exec java \
 	-Xms2G -Xmx4G \

@@ -33,19 +33,19 @@ public class Random {
 		return a[exc(a.length)];
 	}
 
-	public static int inc(int bound) {
+	public static int inc(final int bound) {
 		return exc(bound + 1);
 	}
 
-	public static int inc(int start, int bound) {
+	public static int inc(final int start, final int bound) {
 		return exc(start, bound + 1);
 	}
 
-	public static int exc(int bound) {
+	public static int exc(final int bound) {
 		return exc(0, bound);
 	}
 
-	public static int exc(int start, int bound) {
+	public static int exc(final int start, final int bound) {
 		return r.nextInt(start, bound);
 	}
 
@@ -69,6 +69,8 @@ public class Random {
 	public static Material block() {
 		return pick(blocks);
 	}
+
+	public static final int itemInterval = 20 * 15;
 
 	public static ItemStack[] item() {
 		final var m = pick(items);
@@ -113,7 +115,7 @@ public class Random {
 		return l.getWorld().spawnEntity(l, pick(entities));
 	}
 
-	public static BufferedImage image(int w, int h) {
+	public static BufferedImage image(final int w, final int h) {
 		final var img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
 		for (int x = 0; x < w; x++)
 			for (int y = 0; y < h; y++)

@@ -4,34 +4,22 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 
 public class Command {
-	public static void load() {
-		new Executor("ping") {
-			@Override
-			protected boolean perms(final CommandSender sender) {
-				return true;
-			}
-
+	public Command() {
+		new Default("ping") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
 				sender.sendMessage("pong");
 			}
 		};
-		new Executor("echo") {
-			@Override
-			protected boolean perms(final CommandSender sender) {
-				return true;
-			}
-
+		new Default("echo") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
 				sender.sendMessage(String.join(" ", args));
 			}
 		};
-		new Executor("random") {
+		new Admin("random") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
-				if (!sender.isOp())
-					return;
 				if (sender instanceof final Player p) {
 					if (args.length < 1)
 						return;
@@ -47,10 +35,20 @@ public class Command {
 		};
 	}
 
-	private static abstract class Executor {
+	private static abstract class Admin extends Default {
+		public Admin(final String label) {
+			super(label);
+		}
+
+		protected boolean perms(final CommandSender sender) {
+			return super.perms(sender) && sender.isOp();
+		}
+	}
+
+	private static abstract class Default {
 		public final PluginCommand command;
 
-		public Executor(final String label) {
+		public Default(final String label) {
 			this.command = Plugin.instance.getCommand(label);
 
 			this.command.setExecutor(new CommandExecutor() {
@@ -66,7 +64,7 @@ public class Command {
 		}
 
 		protected boolean perms(final CommandSender sender) {
-			return sender.isOp();
+			return true;
 		}
 
 		protected abstract void run(CommandSender sender, String[] args);
