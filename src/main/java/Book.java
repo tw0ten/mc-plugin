@@ -28,7 +28,16 @@ public class Book {
 		for (var j = 0; !b.hasTitle(); j++)
 			b.setTitle(this.title.substring(0, this.title.length() - j));
 
-		b.lore(List.of(Text.lore(String.valueOf(content.length()))));
+		final var lore = new ArrayList<Component>();
+
+		if (!this.title.equals(b.getTitle())) {
+			lore.add(Text.lore("\"" + this.title + "\""));
+			b.setTitle(b.getTitle().substring(0, b.getTitle().length() - 1) + "-");
+		}
+
+		lore.add(Text.lore(String.valueOf(content.length())));
+
+		b.lore(lore);
 
 		i.setItemMeta(b);
 		return i;

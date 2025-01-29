@@ -4,6 +4,7 @@ main: Plugin
 api-version: 1.21
 
 commands:
+  reload:
   ping:
   echo:
   random:

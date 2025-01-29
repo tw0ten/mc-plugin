@@ -1,7 +1,9 @@
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 
@@ -20,32 +22,46 @@ public class Event implements Listener {
 	}
 
 	private void tick(final int tick) {
-		if (tick % Random.itemInterval == 0)
+		if ((tick + 1) % Random.itemInterval == 0)
 			for (final var p : Player.s())
 				if (!p.isDead())
 					Item.n(p, Random.item());
+
+		if (tick % 15 == 0 && false)
+			for (final var p : Player.s())
+				Image.particles(
+						p.getLocation().add(p.getLocation().getDirection().multiply(5)).add(0, p.getEyeHeight(), 0),
+						Random.image(32, 32));
 	}
 
 	@EventHandler
 	private void serverPing(final ServerListPingEvent e) {
-		try {
-			final var i = Plugin.instance.getServer().loadServerIcon(Random.image(64, 64));
-			e.setServerIcon(i);
-		} catch (final Exception i) {
-			i.printStackTrace();
-		}
 		e.motd(Event.motd);
+	}
+
+	@EventHandler
+	private void login(final PlayerLoginEvent e) {
+		final var i = e.getPlayer();
+		if (!Player.allowed(i))
+			e.disallow(PlayerLoginEvent.Result.KICK_OTHER, Text.plain("disallow"));
 	}
 
 	@EventHandler
 	private void join(final PlayerJoinEvent e) {
 		final var i = e.getPlayer();
 		Player.join(i);
+		e.joinMessage();
 	}
 
 	@EventHandler
 	private void quit(final PlayerQuitEvent e) {
 		final var i = e.getPlayer();
 		Player.quit(i);
+		e.quitMessage();
+	}
+
+	@EventHandler
+	private void despawn(final ItemDespawnEvent e) {
+		e.setCancelled(true);
 	}
 }

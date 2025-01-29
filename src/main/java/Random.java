@@ -3,15 +3,20 @@ import java.nio.file.Files;
 import java.util.Arrays;
 
 import org.bukkit.Color;
+import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.banner.Pattern;
+import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.inventory.meta.ShieldMeta;
 import org.bukkit.potion.PotionType;
 
 public class Random {
@@ -27,7 +32,7 @@ public class Random {
 			.filter(i -> i.isBlock())
 			.toArray(Material[]::new);
 
-	private static <T> T pick(final T[] a) {
+	public static <T> T pick(final T[] a) {
 		if (a.length == 0)
 			return null;
 		return a[exc(a.length)];
@@ -74,7 +79,12 @@ public class Random {
 
 	public static ItemStack[] item() {
 		final var m = pick(items);
+
+		if (m.name().contains("TEMPLATE"))
+			return item();
+
 		switch (m) {
+			case KNOWLEDGE_BOOK:
 			case WRITTEN_BOOK:
 				return book().toItems();
 
@@ -104,7 +114,40 @@ public class Random {
 					return e;
 				}));
 
+			case SHIELD:
+				return Item.s(Item.m(Item.i(m), i -> {
+					((ShieldMeta) i).setBaseColor(pick(DyeColor.values()));
+					final var l = inc(6);
+					for (var k = 0; k < l; k++)
+						((ShieldMeta) i).addPattern(new Pattern(pick(DyeColor.values()), pick(PatternType.values())));
+					return i;
+				}));
+
+			case BLACK_BANNER:
+			case BLUE_BANNER:
+			case BROWN_BANNER:
+			case CYAN_BANNER:
+			case GRAY_BANNER:
+			case GREEN_BANNER:
+			case LIGHT_BLUE_BANNER:
+			case LIGHT_GRAY_BANNER:
+			case LIME_BANNER:
+			case MAGENTA_BANNER:
+			case ORANGE_BANNER:
+			case PINK_BANNER:
+			case PURPLE_BANNER:
+			case RED_BANNER:
+			case WHITE_BANNER:
+			case YELLOW_BANNER:
+				return Item.s(Item.m(Item.i(m), i -> {
+					final var l = inc(6);
+					for (var k = 0; k < l; k++)
+						((BannerMeta) i).addPattern(new Pattern(pick(DyeColor.values()), pick(PatternType.values())));
+					return i;
+				}));
+
 			case PLAYER_HEAD:
+				break;
 
 			default:
 		}

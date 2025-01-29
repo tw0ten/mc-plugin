@@ -1,3 +1,4 @@
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -5,6 +6,13 @@ import org.bukkit.entity.Player;
 
 public class Command {
 	public Command() {
+		new Admin("reload") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				Bukkit.reload();
+				sender.sendMessage("reloaded");
+			}
+		};
 		new Default("ping") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {

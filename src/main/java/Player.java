@@ -7,7 +7,8 @@ public class Player {
 	private static final Map<UUID, org.bukkit.entity.Player> s = new HashMap<>();
 
 	public static void join(final org.bukkit.entity.Player p) {
-		Player.s.put(p.getUniqueId(), p);
+		if (allowed(p))
+			Player.s.put(p.getUniqueId(), p);
 	}
 
 	public static void quit(final org.bukkit.entity.Player p) {
@@ -16,6 +17,10 @@ public class Player {
 
 	public static final Collection<org.bukkit.entity.Player> s() {
 		return s.values();
+	}
+
+	public static boolean allowed(final org.bukkit.entity.Player p) {
+		return true;
 	}
 
 	private static class Wrapper {
