@@ -1,5 +1,5 @@
+import java.util.Arrays;
 import java.util.function.Function;
-
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -7,6 +7,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class Item {
+	public static final Material[] s = Arrays.stream(Material.values())
+			.filter(i -> i.isItem()).toArray(Material[]::new);
+
 	public static ItemStack i(final Material m) {
 		return new ItemStack(m);
 	}
@@ -28,5 +31,4 @@ public class Item {
 			e.setItemStack(i);
 		}
 	}
-
 }

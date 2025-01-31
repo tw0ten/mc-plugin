@@ -1,14 +1,14 @@
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.util.Arrays;
-
+import java.util.Iterator;
+import java.util.List;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
-import org.bukkit.block.banner.PatternType;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
@@ -17,25 +17,36 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.ShieldMeta;
+import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.SuspiciousStewMeta;
 import org.bukkit.potion.PotionType;
+import com.google.common.collect.Lists;
+import io.papermc.paper.potion.SuspiciousEffectEntry;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 
 public class Random {
 	private static final java.util.Random r = new java.util.Random();
 
 	public final static EntityType[] entities = EntityType.values();
 
-	private final static Material[] items = Arrays.stream(Material.values())
-			.filter(i -> i.isItem())
-			.toArray(Material[]::new);
-
 	public final static Material[] blocks = Arrays.stream(Material.values())
-			.filter(i -> i.isBlock())
-			.toArray(Material[]::new);
+			.filter(i -> i.isBlock()).toArray(Material[]::new);
 
 	public static <T> T pick(final T[] a) {
 		if (a.length == 0)
 			return null;
 		return a[exc(a.length)];
+	}
+
+	public static <T> T pick(final List<T> a) {
+		if (a.isEmpty())
+			return null;
+		return a.get(exc(a.size()));
+	}
+
+	public static <T> T pick(final Iterator<T> a) {
+		return pick(Lists.newArrayList(a));
 	}
 
 	public static int inc(final int bound) {
@@ -75,13 +86,35 @@ public class Random {
 		return pick(blocks);
 	}
 
+	private static DyeColor dyeColor() {
+		return pick(DyeColor.values());
+	}
+
+	private static Pattern pattern() {
+		return new Pattern(dyeColor(),
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).iterator()));
+	}
+
 	public static final int itemInterval = 20 * 15;
 
-	public static ItemStack[] item() {
-		final var m = pick(items);
+	private static final Material[] pottery = Arrays.stream(Item.s)
+			.filter(i -> i.name().endsWith("_POTTERY_SHERD")).toArray(Material[]::new);
+	private static final Material[] smithing = Arrays.stream(Item.s)
+			.filter(i -> i.name().endsWith("_SMITHING_TEMPLATE")).toArray(Material[]::new);
 
-		if (m.name().contains("TEMPLATE"))
+	public static ItemStack[] item() {
+		final var m = pick(Item.s);
+
+		if (Arrays.stream(pottery).anyMatch(m::equals)) {
+			if (m == pottery[0])
+				return Item.s(Item.i(pick(pottery)));
 			return item();
+		}
+		if (Arrays.stream(smithing).anyMatch(m::equals)) {
+			if (m == smithing[0])
+				return Item.s(Item.i(pick(smithing)));
+			return item();
+		}
 
 		switch (m) {
 			case KNOWLEDGE_BOOK:
@@ -90,9 +123,8 @@ public class Random {
 
 			case ENCHANTED_BOOK:
 				return Item.s(Item.m(Item.i(m), e -> {
-					final var c = pick(Enchantment.values());
-					((EnchantmentStorageMeta) e).addStoredEnchant(c, inc(c.getStartLevel(), c.getMaxLevel()),
-							false);
+					final var c = pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).iterator());
+					((EnchantmentStorageMeta) e).addStoredEnchant(c, inc(c.getStartLevel(), c.getMaxLevel()), false);
 					return e;
 				}));
 
@@ -116,10 +148,10 @@ public class Random {
 
 			case SHIELD:
 				return Item.s(Item.m(Item.i(m), i -> {
-					((ShieldMeta) i).setBaseColor(pick(DyeColor.values()));
+					((ShieldMeta) i).setBaseColor(dyeColor());
 					final var l = inc(6);
 					for (var k = 0; k < l; k++)
-						((ShieldMeta) i).addPattern(new Pattern(pick(DyeColor.values()), pick(PatternType.values())));
+						((ShieldMeta) i).addPattern(pattern());
 					return i;
 				}));
 
@@ -142,16 +174,36 @@ public class Random {
 				return Item.s(Item.m(Item.i(m), i -> {
 					final var l = inc(6);
 					for (var k = 0; k < l; k++)
-						((BannerMeta) i).addPattern(new Pattern(pick(DyeColor.values()), pick(PatternType.values())));
+						((BannerMeta) i).addPattern(pattern());
 					return i;
 				}));
 
 			case PLAYER_HEAD:
-				break;
+				return Item.s(Item.m(Item.i(m), i -> {
+					((SkullMeta) i).setOwningPlayer(pick(Bukkit.getOfflinePlayers()));
+					return i;
+				}));
+
+			case FILLED_MAP:
+				return map();
+
+			case SUSPICIOUS_STEW:
+				return Item.s(Item.m(Item.i(m), i -> {
+					((SuspiciousStewMeta) i).addCustomEffect(
+							SuspiciousEffectEntry
+									.create(pick(PotionType.values()).getPotionEffects().getFirst().getType(), 20 * 30),
+							true);
+					return i;
+				}));
 
 			default:
 		}
 		return Item.s(Item.i(m));
+
+	}
+
+	public static ItemStack[] map() {
+		return Image.map(image(Image.mapDims.w, Image.mapDims.h));
 	}
 
 	public static Entity entity(final Location l) {
@@ -160,8 +212,8 @@ public class Random {
 
 	public static BufferedImage image(final int w, final int h) {
 		final var img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-		for (int x = 0; x < w; x++)
-			for (int y = 0; y < h; y++)
+		for (var x = 0; x < img.getWidth(); x++)
+			for (var y = 0; y < img.getHeight(); y++)
 				img.setRGB(x, y, new java.awt.Color(inc(0xFF), inc(0xFF), inc(0xFF)).getRGB());
 		return img;
 	}

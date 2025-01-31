@@ -1,3 +1,4 @@
+import java.awt.image.BufferedImage;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -7,10 +8,12 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 
 public class Event implements Listener {
 	private static final Component motd = Text.plain("the leather club");
+	private static BufferedImage icon;
 
 	int tick = 0;
 
@@ -27,11 +30,14 @@ public class Event implements Listener {
 				if (!p.isDead())
 					Item.n(p, Random.item());
 
-		if (tick % 15 == 0 && false)
+		if (tick % 5 == 0) {
 			for (final var p : Player.s())
 				Image.particles(
-						p.getLocation().add(p.getLocation().getDirection().multiply(5)).add(0, p.getEyeHeight(), 0),
-						Random.image(32, 32));
+						p.getLocation().add(0, p.getEyeHeight(),
+								0).add(p.getLocation().getDirection().multiply(7)),
+						icon);
+
+		}
 	}
 
 	@EventHandler
@@ -50,14 +56,23 @@ public class Event implements Listener {
 	private void join(final PlayerJoinEvent e) {
 		final var i = e.getPlayer();
 		Player.join(i);
-		e.joinMessage();
+		e.joinMessage(Text.plain("+").appendSpace().append(Text.player(i)));
 	}
 
 	@EventHandler
 	private void quit(final PlayerQuitEvent e) {
 		final var i = e.getPlayer();
 		Player.quit(i);
-		e.quitMessage();
+		e.quitMessage(Text.plain("-").appendSpace().append(Text.player(i)));
+	}
+
+	@EventHandler
+	private void chat(final AsyncChatEvent e) {
+		final var i = e.signedMessage();
+		e.setCancelled(true);
+		Bukkit.broadcast(Text.player(e.getPlayer())
+				.append(Text.plain(": "))
+				.append(Text.plain(i.message())));
 	}
 
 	@EventHandler

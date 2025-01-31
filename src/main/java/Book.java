@@ -67,11 +67,8 @@ public class Book {
 		private static int lines(final String s) {
 			final String[] lines = s.split("\n");
 			var ls = lines.length;
-			for (final var l : lines) {
-				// approximate
-				final var ll = l.length() * 8;
-				ls += (ll - 1) / max.width;
-			}
+			for (final var l : lines)
+				ls += (l.length() * 8 - 1) / max.width;
 			return ls;
 		}
 

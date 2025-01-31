@@ -9,6 +9,7 @@ public class Player {
 	public static void join(final org.bukkit.entity.Player p) {
 		if (allowed(p))
 			Player.s.put(p.getUniqueId(), p);
+		p.displayName(Text.plain(p.getName()));
 	}
 
 	public static void quit(final org.bukkit.entity.Player p) {

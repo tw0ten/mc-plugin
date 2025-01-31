@@ -1,7 +1,10 @@
+import java.util.List;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 public class Command {
@@ -35,10 +38,29 @@ public class Command {
 						case "book":
 							Item.n(p, Random.book().toItems());
 							return;
+						case "item":
+							Item.n(p, Random.item());
+							return;
+						case "entity":
+							Random.entity(p.getLocation());
+							return;
+						case "map":
+							Item.n(p, Random.map());
+							return;
 						default:
 					}
 					return;
 				}
+			}
+
+			@Override
+			protected List<String> complete(CommandSender sender, String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("book", "item", "entity", "map");
+					default:
+				}
+				return List.of();
 			}
 		};
 	}
@@ -69,6 +91,16 @@ public class Command {
 					return true;
 				}
 			});
+
+			this.command.setTabCompleter(new TabCompleter() {
+				@Override
+				public List<String> onTabComplete(final CommandSender sender, final org.bukkit.command.Command command,
+						final String label, final String[] args) {
+					if (!perms(sender))
+						return List.of();
+					return complete(sender, args);
+				}
+			});
 		}
 
 		protected boolean perms(final CommandSender sender) {
@@ -76,5 +108,9 @@ public class Command {
 		}
 
 		protected abstract void run(CommandSender sender, String[] args);
+
+		protected List<String> complete(CommandSender sender, String[] args) {
+			return List.of();
+		}
 	}
 }
