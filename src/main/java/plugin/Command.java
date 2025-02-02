@@ -1,7 +1,6 @@
 package plugin;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -11,8 +10,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import plugin.image.Image;
 import plugin.book.Book;
+import plugin.image.Image;
 import plugin.random.Random;
 
 public class Command {
@@ -86,31 +85,53 @@ public class Command {
 		new Admin("book") {
 			@Override
 			protected void run(CommandSender sender, String[] args) {
-				if (sender instanceof Player p) {
-					int i;
+				switch (args[0]) {
+					case "find":
+						final var s = String.join(" ", args).substring("find ".length());
+						for (final var b : Book.books()) {
+							final var r = b.find(s);
+							if (r == null)
+								continue;
+							sender.sendMessage(Text.plain(r));
+						}
+						break;
+					case "get":
+						if (sender instanceof Player p) {
+							int i;
+							var title = "";
+							for (i = 0; i < args.length; i++) {
+								title += args[i];
 
-					var title = "";
-					for (i = 0; i < args.length; i++) {
-						title += args[i];
+								if (!args[i].endsWith(File.pathSeparator))
+									break;
+								title = title.substring(0, title.length() - 1);
+								title += " ";
+							}
 
-						if (!args[i].endsWith(File.pathSeparator))
-							break;
-						title = title.substring(0, title.length() - 1);
-						title += " ";
-					}
+							var author = "";
+							for (i++; i < args.length; i++) {
+								author += args[i];
+								if (!args[i].endsWith(File.pathSeparator))
+									break;
+								author = author.substring(0, author.length() - 1);
+								author += " ";
+							}
 
-					var author = "";
-					for (i++; i < args.length; i++) {
-						author += args[i];
-						if (!args[i].endsWith(File.pathSeparator))
-							break;
-						author = author.substring(0, author.length() - 1);
-						author += " ";
-					}
-
-					Item.n(p, Book.load(title, author).toItems());
-					return;
+							Item.n(p, Book.load(title, author).toItems());
+						}
+						return;
+					default:
 				}
+			}
+
+			@Override
+			protected List<String> complete(final CommandSender sender, final String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("get", "find");
+					default:
+				}
+				return List.of();
 			}
 		};
 		new Admin("random") {

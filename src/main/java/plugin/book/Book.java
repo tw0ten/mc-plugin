@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Material;
@@ -12,6 +13,7 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BookMeta.Generation;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import plugin.Plugin;
 import plugin.Text;
 
@@ -93,7 +95,7 @@ public class Book {
 		}
 
 		public Component asComponent() {
-			return Component.text().content(this.content).build();
+			return Text.plain(this.content);
 		}
 	}
 
@@ -138,6 +140,33 @@ public class Book {
 		return books.toArray(ItemStack[]::new);
 	}
 
+	public String find(final String s) {
+		if (!this.content.contains(s))
+			return null;
+		var o = this.toString() + "\n";
+		final var items = Arrays.stream(this.toItems())
+				.map(i -> ((BookMeta) i.getItemMeta()).pages().stream()
+						.map(j -> ((TextComponent) j).content().length())
+						.toArray(Integer[]::new))
+				.toArray(Integer[][]::new);
+		for (var i = -1; (i = this.content.indexOf(s, i)) != -1; o += "\n", i++) {
+			o += i + ": ";
+			var c = 0;
+			int book = -1, page = -1;
+			for (book = 0; book < items.length; book++) {
+				if (c >= i)
+					break;
+				for (page = 0; page < items[book].length; page++) {
+					if (c >= i)
+						break;
+					c += items[book][page];
+				}
+			}
+			o += "book " + book + ", page " + page;
+		}
+		return o.substring(0, o.length() - 1);
+	}
+
 	@Override
 	public String toString() {
 		if (this.author == null) {
@@ -145,21 +174,20 @@ public class Book {
 				return super.toString();
 			return "\"" + this.title + "\"";
 		}
-
 		return "\"" + this.title + "\" - " + this.author;
 	}
 
 	public static Book[] books() {
-		final var books = new ArrayList<>();
+		final var books = new ArrayList<Book>();
 		final var library = Plugin.instance.getDataPath().resolve("library").toFile();
 		for (final var author : library.listFiles()) {
 			if (author.isFile()) {
-				books.add(new Book(author.getName(), null, null));
+				books.add(Book.load(author.getName(), null));
 				continue;
 			}
 
 			for (final var title : author.listFiles())
-				books.add(new Book(title.getName(), author.getName(), null));
+				books.add(Book.load(title.getName(), author.getName()));
 		}
 		return books.toArray(Book[]::new);
 	}
