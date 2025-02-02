@@ -1,4 +1,8 @@
+package plugin;
+
 import org.bukkit.plugin.java.JavaPlugin;
+
+import plugin.book.Library;
 
 public class Plugin extends JavaPlugin {
 	public static JavaPlugin instance;
@@ -30,6 +34,8 @@ public class Plugin extends JavaPlugin {
 
 		new Event();
 		new Command();
+
+		new Library();
 
 		getLogger().info("enabled");
 	}

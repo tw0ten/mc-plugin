@@ -1,6 +1,6 @@
 name: Plugin
 version: 0.0.0
-main: Plugin
+main: plugin.Plugin
 api-version: 1.21
 
 commands:
@@ -8,3 +8,5 @@ commands:
   ping:
   echo:
   random:
+  image:
+  book:

@@ -1,5 +1,8 @@
+package plugin;
+
 import java.util.Arrays;
 import java.util.function.Function;
+
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;

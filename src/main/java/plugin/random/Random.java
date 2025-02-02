@@ -1,8 +1,12 @@
+package plugin.random;
+
 import java.awt.image.BufferedImage;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -20,10 +24,15 @@ import org.bukkit.inventory.meta.ShieldMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.inventory.meta.SuspiciousStewMeta;
 import org.bukkit.potion.PotionType;
+
 import com.google.common.collect.Lists;
+
 import io.papermc.paper.potion.SuspiciousEffectEntry;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
+import plugin.Item;
+import plugin.book.Book;
+import plugin.image.Image;
 
 public class Random {
 	private static final java.util.Random r = new java.util.Random();
@@ -49,6 +58,10 @@ public class Random {
 		return pick(Lists.newArrayList(a));
 	}
 
+	public static <T> T pick(final Stream<T> a) {
+		return pick(a.iterator());
+	}
+
 	public static int inc(final int bound) {
 		return exc(bound + 1);
 	}
@@ -70,16 +83,8 @@ public class Random {
 	}
 
 	public static Book book() {
-		final var library = Plugin.instance.getDataPath().resolve("library").toFile();
-		final var author = pick(library.listFiles());
-		final var book = pick(author.listFiles());
-		try {
-			final var s = Files.readString(book.toPath());
-			return new Book(book.getName(), author.getName(), s);
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return new Book("e", e.getClass().getSimpleName(), e.toString());
-		}
+		final var b = pick(Book.books());
+		return Book.load(b.title, b.author);
 	}
 
 	public static Material block() {
@@ -92,7 +97,7 @@ public class Random {
 
 	private static Pattern pattern() {
 		return new Pattern(dyeColor(),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).iterator()));
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).stream()));
 	}
 
 	public static final int itemInterval = 20 * 15;

@@ -1,3 +1,7 @@
+package plugin;
+
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -7,8 +11,13 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import plugin.image.Image;
+import plugin.book.Book;
+import plugin.random.Random;
+
 public class Command {
 	public Command() {
+		// TODO ???
 		new Admin("reload") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
@@ -26,6 +35,82 @@ public class Command {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
 				sender.sendMessage(String.join(" ", args));
+			}
+		};
+		new Default("image") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				if (sender instanceof Player p) {
+					if (args.length < 1)
+						return;
+					switch (args[0]) {
+						case "screen":
+							if (args.length < 2)
+								return;
+							switch (args[1]) {
+								case "follow":
+									if (Image.Screen.p == p)
+										Image.Screen.p = null;
+									else
+										Image.Screen.p = p;
+									return;
+								case "clear":
+									Image.Screen.p = null;
+									Image.Screen.l = null;
+									return;
+								default:
+							}
+							return;
+						default:
+					}
+					return;
+				}
+			}
+
+			@Override
+			protected List<String> complete(CommandSender sender, String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("screen");
+					case 2:
+						switch (args[0]) {
+							case "screen":
+								return List.of("follow", "clear");
+							default:
+						}
+					default:
+				}
+				return List.of();
+			}
+		};
+		new Admin("book") {
+			@Override
+			protected void run(CommandSender sender, String[] args) {
+				if (sender instanceof Player p) {
+					int i;
+
+					var title = "";
+					for (i = 0; i < args.length; i++) {
+						title += args[i];
+
+						if (!args[i].endsWith(File.pathSeparator))
+							break;
+						title = title.substring(0, title.length() - 1);
+						title += " ";
+					}
+
+					var author = "";
+					for (i++; i < args.length; i++) {
+						author += args[i];
+						if (!args[i].endsWith(File.pathSeparator))
+							break;
+						author = author.substring(0, author.length() - 1);
+						author += " ";
+					}
+
+					Item.n(p, Book.load(title, author).toItems());
+					return;
+				}
 			}
 		};
 		new Admin("random") {
@@ -54,7 +139,7 @@ public class Command {
 			}
 
 			@Override
-			protected List<String> complete(CommandSender sender, String[] args) {
+			protected List<String> complete(final CommandSender sender, final String[] args) {
 				switch (args.length) {
 					case 1:
 						return List.of("book", "item", "entity", "map");
@@ -80,6 +165,9 @@ public class Command {
 
 		public Default(final String label) {
 			this.command = Plugin.instance.getCommand(label);
+
+			this.command.setDescription("description");
+			this.command.setUsage("usage");
 
 			this.command.setExecutor(new CommandExecutor() {
 				@Override
@@ -109,7 +197,7 @@ public class Command {
 
 		protected abstract void run(CommandSender sender, String[] args);
 
-		protected List<String> complete(CommandSender sender, String[] args) {
+		protected List<String> complete(final CommandSender sender, final String[] args) {
 			return List.of();
 		}
 	}

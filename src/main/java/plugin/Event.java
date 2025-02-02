@@ -1,4 +1,9 @@
+package plugin;
+
 import java.awt.image.BufferedImage;
+
+import javax.imageio.ImageIO;
+
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,12 +15,14 @@ import org.bukkit.event.server.ServerListPingEvent;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
+import plugin.image.Image;
+import plugin.random.Random;
 
 public class Event implements Listener {
 	private static final Component motd = Text.plain("the leather club");
 	private static BufferedImage icon;
 
-	int tick = 0;
+	private int tick = 0;
 
 	public Event() {
 		Bukkit.getPluginManager().registerEvents(this, Plugin.instance);
@@ -31,12 +38,18 @@ public class Event implements Listener {
 					Item.n(p, Random.item());
 
 		if (tick % 5 == 0) {
-			for (final var p : Player.s())
-				Image.particles(
-						p.getLocation().add(0, p.getEyeHeight(),
-								0).add(p.getLocation().getDirection().multiply(7)),
-						icon);
+			final var p = Image.Screen.p;
+			if (p != null)
+				Image.Screen.l = p.getLocation().add(0, p.getEyeHeight(), 0)
+						.add(p.getLocation().getDirection().multiply(8));
 
+			if (Image.Screen.l == null)
+				return;
+			try {
+				icon = ImageIO.read(Plugin.instance.getDataPath().resolve("screen.png").toFile());
+			} catch (final Exception e) {
+			}
+			Image.particles(icon);
 		}
 	}
 

@@ -1,3 +1,8 @@
+package plugin.book;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,9 +12,11 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BookMeta.Generation;
 
 import net.kyori.adventure.text.Component;
+import plugin.Plugin;
+import plugin.Text;
 
 public class Book {
-	private final String title, author, content;
+	public final String title, author, content;
 
 	public Book(final String title, final String author, final String content) {
 		this.title = title;
@@ -17,22 +24,30 @@ public class Book {
 		this.content = content;
 	}
 
+	public Book(final String title, final String content) {
+		this(title, null, content);
+	}
+
+	public Book(final String content) {
+		this(null, null, content);
+	}
+
 	private ItemStack defaultItem() {
 		final var i = new ItemStack(Material.WRITTEN_BOOK);
 		final var b = (BookMeta) i.getItemMeta();
+		final var lore = new ArrayList<Component>();
 
 		b.setGeneration(Generation.TATTERED);
 
 		b.setAuthor(this.author);
+		if (this.title != null) {
+			for (var j = 0; !b.hasTitle(); j++)
+				b.setTitle(this.title.substring(0, this.title.length() - j));
 
-		for (var j = 0; !b.hasTitle(); j++)
-			b.setTitle(this.title.substring(0, this.title.length() - j));
-
-		final var lore = new ArrayList<Component>();
-
-		if (!this.title.equals(b.getTitle())) {
-			lore.add(Text.lore("\"" + this.title + "\""));
-			b.setTitle(b.getTitle().substring(0, b.getTitle().length() - 1) + "-");
+			if (!this.title.equals(b.getTitle())) {
+				lore.add(Text.lore("\"" + this.title + "\""));
+				b.setTitle(b.getTitle().substring(0, b.getTitle().length() - 1) + "-");
+			}
 		}
 
 		lore.add(Text.lore(String.valueOf(content.length())));
@@ -125,6 +140,51 @@ public class Book {
 
 	@Override
 	public String toString() {
+		if (this.author == null) {
+			if (this.title == null)
+				return super.toString();
+			return "\"" + this.title + "\"";
+		}
+
 		return "\"" + this.title + "\" - " + this.author;
+	}
+
+	public static Book[] books() {
+		final var books = new ArrayList<>();
+		final var library = Plugin.instance.getDataPath().resolve("library").toFile();
+		for (final var author : library.listFiles()) {
+			if (author.isFile()) {
+				books.add(new Book(author.getName(), null, null));
+				continue;
+			}
+
+			for (final var title : author.listFiles())
+				books.add(new Book(title.getName(), author.getName(), null));
+		}
+		return books.toArray(Book[]::new);
+	}
+
+	public static Book exception(final Exception e) {
+		final var sw = new StringWriter();
+		e.printStackTrace(new PrintWriter(sw));
+		return new Book(e.getClass().getSimpleName(), sw.toString());
+	}
+
+	public static Book load(final String title, final String author) {
+		final var lib = Plugin.instance.getDataPath().resolve("library");
+
+		var p = lib;
+		if (author != null)
+			p = p.resolve(author);
+		p = p.resolve(title);
+
+		if (!p.getParent().equals(lib) && !p.getParent().getParent().equals(lib))
+			return new Book("no");
+
+		try {
+			return new Book(title, author, Files.readString(p));
+		} catch (final Exception e) {
+			return Book.exception(e);
+		}
 	}
 }
