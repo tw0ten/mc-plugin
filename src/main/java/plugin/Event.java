@@ -15,27 +15,42 @@ import org.bukkit.event.server.ServerListPingEvent;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
-import plugin.image.Image;
-import plugin.random.Random;
+import plugin.etc.Audio;
+import plugin.etc.Image;
+import plugin.etc.Random;
 
 public class Event implements Listener {
 	private static final Component motd = Text.plain("the leather club");
 	private static BufferedImage icon;
 
 	private int tick = 0;
+	Audio audio;
 
 	public Event() {
 		Bukkit.getPluginManager().registerEvents(this, Plugin.instance);
+		try {
+			audio = Audio.readWavFile(Plugin.instance.getDataPath().resolve("sound.wav").toFile());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.instance, () -> {
 			this.tick(tick++);
 		}, 0, 1);
 	}
 
 	private void tick(final int tick) {
+
 		if ((tick + 1) % Random.itemInterval == 0)
 			for (final var p : Player.s())
 				if (!p.isDead())
 					Item.n(p, Random.item());
+
+		if (this.audio != null) {
+			for (final var p : Player.s())
+				audio.play(p.getLocation());
+			if (audio.i == audio.waves.length)
+				audio.i = 0;
+		}
 
 		if (tick % 5 == 0) {
 			final var p = Image.Screen.p;
@@ -90,6 +105,6 @@ public class Event implements Listener {
 
 	@EventHandler
 	private void despawn(final ItemDespawnEvent e) {
-		e.setCancelled(true);
+		e.getEntity().setGlowing(true);
 	}
 }

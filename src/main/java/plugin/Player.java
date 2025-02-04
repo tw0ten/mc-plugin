@@ -9,8 +9,9 @@ public class Player {
 	private static final Map<UUID, org.bukkit.entity.Player> s = new HashMap<>();
 
 	public static void join(final org.bukkit.entity.Player p) {
-		if (allowed(p))
-			Player.s.put(p.getUniqueId(), p);
+		Player.s.put(p.getUniqueId(), p);
+		if (!allowed(p))
+			p.kick();
 		p.displayName(Text.plain(p.getName()));
 	}
 

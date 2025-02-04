@@ -1,4 +1,4 @@
-package plugin.image;
+package plugin.etc;
 
 import java.awt.image.BufferedImage;
 

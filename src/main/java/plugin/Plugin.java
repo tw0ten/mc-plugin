@@ -2,7 +2,7 @@ package plugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-import plugin.book.Library;
+import plugin.etc.art.Library;
 
 public class Plugin extends JavaPlugin {
 	public static JavaPlugin instance;
@@ -24,13 +24,8 @@ public class Plugin extends JavaPlugin {
 	public void onEnable() {
 		super.onEnable();
 
-		for (final var p : getServer().getOnlinePlayers()) {
-			if (!Player.allowed(p)) {
-				p.kick();
-				continue;
-			}
+		for (final var p : getServer().getOnlinePlayers())
 			Player.join(p);
-		}
 
 		new Event();
 		new Command();

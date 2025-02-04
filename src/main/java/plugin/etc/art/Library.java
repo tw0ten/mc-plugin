@@ -1,4 +1,4 @@
-package plugin.book;
+package plugin.etc.art;
 
 import org.bukkit.GameRule;
 import org.bukkit.NamespacedKey;

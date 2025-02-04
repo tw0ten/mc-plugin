@@ -1,4 +1,4 @@
-package plugin.book;
+package plugin.etc;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

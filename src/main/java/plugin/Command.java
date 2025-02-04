@@ -10,9 +10,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import plugin.book.Book;
-import plugin.image.Image;
-import plugin.random.Random;
+import plugin.etc.*;
 
 public class Command {
 	public Command() {
@@ -88,6 +86,7 @@ public class Command {
 				switch (args[0]) {
 					case "find":
 						final var s = String.join(" ", args).substring("find ".length());
+						sender.sendMessage(Text.plain("\"" + s + "\""));
 						for (final var b : Book.books()) {
 							final var r = b.find(s);
 							if (r == null)

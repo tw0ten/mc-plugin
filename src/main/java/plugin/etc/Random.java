@@ -1,4 +1,4 @@
-package plugin.random;
+package plugin.etc;
 
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -30,8 +31,6 @@ import io.papermc.paper.potion.SuspiciousEffectEntry;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import plugin.Item;
-import plugin.book.Book;
-import plugin.image.Image;
 
 public class Random {
 	private static final java.util.Random r = new java.util.Random();
@@ -220,5 +219,22 @@ public class Random {
 			for (var y = 0; y < img.getHeight(); y++)
 				img.setRGB(x, y, new java.awt.Color(inc(0xFF), inc(0xFF), inc(0xFF)).getRGB());
 		return img;
+	}
+
+	public static void chunk(final Chunk c) {
+		final var y0 = c.getWorld().getMaxHeight();
+		final var x0 = 16;
+		final var z0 = 16;
+
+		for (var y = c.getWorld().getMinHeight(); y < y0; y++) {
+			for (var x = 0; x < x0; x++) {
+				for (var z = 0; z < z0; z++) {
+					final var b = c.getBlock(x, y, z);
+					if (b.getType() == Material.AIR)
+						continue;
+					b.setType(block());
+				}
+			}
+		}
 	}
 }
