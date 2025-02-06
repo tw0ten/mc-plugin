@@ -29,7 +29,7 @@ public class Event implements Listener {
 	public Event() {
 		Bukkit.getPluginManager().registerEvents(this, Plugin.instance);
 		try {
-			audio = Audio.readWavFile(Plugin.instance.getDataPath().resolve("sound.wav").toFile());
+			audio = Audio.load(Plugin.instance.getDataPath().resolve("sound.wav").toFile());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -49,7 +49,7 @@ public class Event implements Listener {
 			for (final var p : Player.s())
 				audio.play(p.getLocation());
 			if (audio.i == audio.waves.length)
-				audio.i = 0;
+				audio.i = -1000;
 		}
 
 		if (tick % 5 == 0) {

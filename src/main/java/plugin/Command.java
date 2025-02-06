@@ -85,7 +85,7 @@ public class Command {
 			protected void run(CommandSender sender, String[] args) {
 				switch (args[0]) {
 					case "find":
-						final var s = String.join(" ", args).substring("find ".length());
+						final var s = String.join(" ", args).substring(args[0].length() + 1);
 						sender.sendMessage(Text.plain("\"" + s + "\""));
 						for (final var b : Book.books()) {
 							final var r = b.find(s);
@@ -98,7 +98,7 @@ public class Command {
 						if (sender instanceof Player p) {
 							int i;
 							var title = "";
-							for (i = 0; i < args.length; i++) {
+							for (i = 1; i < args.length; i++) {
 								title += args[i];
 
 								if (!args[i].endsWith(File.pathSeparator))
