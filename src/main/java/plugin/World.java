@@ -2,6 +2,7 @@ package plugin;
 
 import java.util.Random;
 
+import org.bukkit.GameRule;
 import org.bukkit.NamespacedKey;
 import org.bukkit.WorldCreator;
 import org.bukkit.generator.ChunkGenerator;
@@ -22,6 +23,13 @@ public class World {
 		final var w = wc.createWorld();
 		w.setAutoSave(false);
 		return w;
+	}
+
+	public static void idle(final org.bukkit.World world) {
+		world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+		world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+		world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+		world.setPVP(false);
 	}
 
 	private static final ChunkGenerator voidGenerator = new ChunkGenerator() {

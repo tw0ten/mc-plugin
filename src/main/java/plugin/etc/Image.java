@@ -1,12 +1,17 @@
 package plugin.etc;
 
 import java.awt.image.BufferedImage;
+import java.net.URI;
+import java.util.List;
+
+import javax.imageio.ImageIO;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
@@ -15,6 +20,7 @@ import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.util.Vector;
 
+import plugin.Command;
 import plugin.Item;
 
 public class Image {
@@ -51,11 +57,22 @@ public class Image {
 		for (var x = 0; x < img.getWidth() / s; x++)
 			for (var y = 0; y < img.getHeight() / s; y++)
 				particle(l.clone().add(r.clone().multiply(x)).add(d.clone().multiply(y)),
-						Color.fromARGB(img.getRGB(x * s, y * s)));
+						Color.fromARGB(img.getRGB(x * s, y * s)), Screen.scale);
 	}
 
-	private static void particle(final Location l, final Color c) {
-		final var i = new Particle.DustOptions(c, Screen.scale);
+	public static void particles(final BufferedImage img, final float scale, final Location tl, final Location br) {
+		final var d = (tl.getY() - br.getY()) / img.getHeight();
+		final var r = br.clone().subtract(tl).multiply(1.0 / img.getWidth());
+		r.setY(0);
+
+		for (var x = 0; x < img.getWidth(); x++)
+			for (var y = 0; y < img.getHeight(); y++)
+				particle(tl.clone().add(r.clone().multiply(x)).add(0, d * y, 0),
+						Color.fromARGB(img.getRGB(x, y)), scale);
+	}
+
+	private static void particle(final Location l, final Color c, final float scale) {
+		final var i = new Particle.DustOptions(c, scale);
 		l.getWorld().spawnParticle(Particle.DUST, l, 0, i);
 	}
 
@@ -65,5 +82,64 @@ public class Image {
 
 		public final static float scale = 1.5f;
 		public final static float interval = scale * 0.125f;
+	}
+
+	public static void load() {
+		Command.add(new Command("image") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				if (sender instanceof final Player p) {
+					if (args.length < 1)
+						return;
+					switch (args[0]) {
+						case "map":
+							if (args.length < 2) {
+								sender.sendMessage("url?");
+								return;
+							}
+							try {
+								Item.n(p, Image.map(ImageIO.read(URI.create(args[1]).toURL())));
+							} catch (Exception e) {
+							}
+							return;
+						case "screen":
+							if (args.length < 2)
+								return;
+							switch (args[1]) {
+								case "follow":
+									if (Image.Screen.p == p)
+										Image.Screen.p = null;
+									else
+										Image.Screen.p = p;
+									return;
+								case "clear":
+									Image.Screen.p = null;
+									Image.Screen.l = null;
+									return;
+								default:
+							}
+							return;
+						default:
+					}
+					return;
+				}
+			}
+
+			@Override
+			protected List<String> complete(final CommandSender sender, final String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("map", "screen");
+					case 2:
+						switch (args[0]) {
+							case "screen":
+								return List.of("follow", "clear");
+							default:
+						}
+					default:
+				}
+				return List.of();
+			}
+		});
 	}
 }

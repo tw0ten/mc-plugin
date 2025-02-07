@@ -16,6 +16,7 @@ public class Audio {
 	private final Sound sound = Sound.BLOCK_NOTE_BLOCK_HARP;
 	public float volume = 1f;
 	public int i = 0;
+	// [channels][waves]
 	public final Wave[] waves;
 
 	public class Wave {
@@ -48,11 +49,12 @@ public class Audio {
 
 		for (var i = 0; i < this.waves.length; i++) {
 			final var frame = Arrays.copyOfRange(waves, i * chunk, Math.min((i + 1) * chunk, waves.length));
-			final var pitch = detectPitchYIN(frame, frequency);
+			final var pitch = 0; // detectPitchYIN(frame, frequency);
 			var volume = 0f;
 			for (final var f : frame)
 				volume += f;
-			// bigger chunks, overlapping? study audio theory instead of guessing and crying to ai
+			// bigger chunks, overlapping? study audio theory instead of guessing and crying
+			// to ai
 			this.waves[i] = new Wave(1 + volume / frame.length, pitch);
 		}
 	}

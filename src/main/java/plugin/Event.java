@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ItemDespawnEvent;
@@ -28,30 +29,18 @@ public class Event implements Listener {
 
 	public Event() {
 		Bukkit.getPluginManager().registerEvents(this, Plugin.instance);
-		try {
-			audio = Audio.load(Plugin.instance.getDataPath().resolve("sound.wav").toFile());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.instance, () -> {
 			this.tick(tick++);
 		}, 0, 1);
 	}
 
 	private void tick(final int tick) {
-
 		if ((tick + 1) % Random.itemInterval == 0)
 			for (final var p : Player.s())
-				if (!p.isDead())
+				if (!p.isDead() && p.getGameMode() == GameMode.SURVIVAL)
 					Item.n(p, Random.item());
 
-		if (this.audio != null) {
-			for (final var p : Player.s())
-				audio.play(p.getLocation());
-			if (audio.i == audio.waves.length)
-				audio.i = -1000;
-		}
-
+		// DEBUG
 		if (tick % 5 == 0) {
 			final var p = Image.Screen.p;
 			if (p != null)

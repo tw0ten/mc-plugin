@@ -13,8 +13,10 @@ import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
@@ -30,6 +32,7 @@ import com.google.common.collect.Lists;
 import io.papermc.paper.potion.SuspiciousEffectEntry;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
+import plugin.Command;
 import plugin.Item;
 
 public class Random {
@@ -236,5 +239,43 @@ public class Random {
 				}
 			}
 		}
+	}
+
+	public static void load() {
+		Command.add(new Command.Admin("random") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				if (sender instanceof final Player p) {
+					if (args.length < 1)
+						return;
+					switch (args[0]) {
+						case "book":
+							Item.n(p, Random.book().toItems());
+							return;
+						case "item":
+							Item.n(p, Random.item());
+							return;
+						case "entity":
+							Random.entity(p.getLocation());
+							return;
+						case "map":
+							Item.n(p, Random.map());
+							return;
+						default:
+					}
+					return;
+				}
+			}
+
+			@Override
+			protected List<String> complete(final CommandSender sender, final String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("book", "item", "entity", "map");
+					default:
+				}
+				return List.of();
+			}
+		});
 	}
 }

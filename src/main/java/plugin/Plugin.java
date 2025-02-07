@@ -2,7 +2,8 @@ package plugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-import plugin.etc.art.Library;
+import plugin.etc.*;
+import plugin.etc.art.*;
 
 public class Plugin extends JavaPlugin {
 	public static JavaPlugin instance;
@@ -17,6 +18,10 @@ public class Plugin extends JavaPlugin {
 		super.onLoad();
 		Plugin.instance = this;
 
+		Book.load();
+		Image.load();
+		Random.load();
+
 		getLogger().info("loaded");
 	}
 
@@ -27,10 +32,12 @@ public class Plugin extends JavaPlugin {
 		for (final var p : getServer().getOnlinePlayers())
 			Player.join(p);
 
+		Command.load();
 		new Event();
-		new Command();
 
 		new Library();
+		new Cinema();
+		new Orchestra();
 
 		getLogger().info("enabled");
 	}
