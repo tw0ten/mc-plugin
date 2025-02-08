@@ -1,6 +1,5 @@
 package plugin.etc.art;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -13,22 +12,23 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
+import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import plugin.World;
 import plugin.Command;
 import plugin.Plugin;
 import plugin.Text;
+import plugin.World;
 import plugin.etc.Audio;
 import plugin.etc.Image;
 
 // extends world?
 public class Cinema {
 	private final org.bukkit.World w;
-	private final Location info;
+	private final Block info;
 	private final Location tl, br;
 	private final Location subsL;
 	private final Location aLL, aRL;
@@ -46,86 +46,87 @@ public class Cinema {
 			if (w == null) {
 				w = World.voidWorld(key);
 				World.idle(w);
+				w.getWorldBorder().setSize(512);
 			}
 			this.w = w;
 		}
 
-		{
-			Command.add(new Command("cinema") {
-				@Override
-				protected void run(final CommandSender sender, final String[] args) {
-					if (args.length < 1) {
-						if (sender instanceof Player p) {
-							if (w.getPlayers().contains(p)) {
-								p.teleport(Bukkit.getWorlds().getFirst().getSpawnLocation().add(0.5, 0, 0.5));
-								p.setGameMode(GameMode.SURVIVAL);
-								return;
-							}
-							p.teleport(w.getSpawnLocation().add(0.5, 0, 0.5));
-							p.setGameMode(GameMode.ADVENTURE);
-						}
-						return;
-					}
-					switch (args[0]) {
-						case "seek":
-							if (args.length < 2) {
-								sender.sendMessage(audio.i + "/" + audio.waves.length);
-								return;
-							}
-							audio.i = Integer.parseInt(args[1]);
+		Command.add(new Command("cinema") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				if (args.length < 1) {
+					if (sender instanceof final Player p) {
+						if (w.getPlayers().contains(p)) {
+							p.teleport(Bukkit.getWorlds().getFirst().getSpawnLocation().add(0.5, 0, 0.5));
+							p.setGameMode(GameMode.SURVIVAL);
 							return;
-						default:
+						}
+						p.teleport(w.getSpawnLocation().add(0.5, 0, 0.5));
+						p.setGameMode(GameMode.ADVENTURE);
 					}
+					return;
 				}
-
-				@Override
-				protected List<String> complete(CommandSender sender, String[] args) {
-					switch (args.length) {
-						case 1:
-							return List.of("seek");
-						default:
-					}
-					return List.of();
+				switch (args[0]) {
+					case "seek":
+						if (args.length < 2) {
+							sender.sendMessage(audio.i + "/" + audio.waves.length);
+							return;
+						}
+						audio.i = Integer.parseInt(args[1]);
+						return;
+					default:
 				}
-			});
-		}
+			}
 
-		this.info = new Location(w, 0, 3, 5);
+			@Override
+			protected List<String> complete(final CommandSender sender, final String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("seek");
+					default:
+				}
+				return List.of();
+			}
+		});
+
+		this.info = new Location(w, 0, 3, 5).getBlock();
 
 		this.tl = new Location(w, -7.5, 11.5, -14.5);
 		this.br = this.tl.clone().add(16, 9, 0);
 
-		this.subsL = new Location(w, -2, 1, -9);
-
 		this.aLL = new Location(w, -6.8, 3.5, 0.5);
 		this.aRL = new Location(w, +7.8, 3.5, 0.5);
 
-		for (final var e : w.getEntitiesByClass(ArmorStand.class))
-			if (e.isInvulnerable())
-				e.remove();
-		e1 = Text.nametag(subsL.clone().add(2.5, -1, 0));
-		e2 = Text.nametag(subsL.clone().add(2.5, -1.25, 0));
+		{
+			this.subsL = new Location(w, 0.5, 0, -9);
 
-		play("/home/twoten/store/torrent/Blade Runner");
+			for (final var e : w.getEntitiesByClass(ArmorStand.class))
+				if (e.isInvulnerable())
+					e.remove();
+
+			e1 = Text.nametag(subsL.clone());
+			e2 = Text.nametag(subsL.clone().add(0, -0.25, 0));
+		}
 
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.instance, () -> {
 			if (this.w.getPlayers().isEmpty())
 				return;
 			this.tick();
 		}, 0, 1);
+
+		play(Plugin.instance.getDataPath().resolve("movie"));
 	}
 
-	public void play(final String path) {
-		final var movie = Path.of(path);
+	public void play(final Path movie) {
 		try {
-			this.subtitles = Subtitles.loadSRT(movie.resolve("subtitles").toFile());
+			this.subtitles = Subtitles.loadSRT(movie.resolve("subtitles"));
 			this.audio = Audio.load(movie.resolve("audio").toFile());
 			this.frames = movie.resolve("frames");
+			Text.sign(info, Text.plain(movie.toRealPath().toFile().getName()));
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
-		Text.sign(info.getBlock(), Text.plain(movie.toFile().getName()));
 	}
 
 	private final Entity e1, e2;
@@ -140,9 +141,7 @@ public class Cinema {
 	private void tick() {
 		final var i = audio.i;
 
-		Text.sign(info.getBlock(),
-				null,
-				Text.plain(i + "/" + audio.waves.length));
+		Text.sign(info, null, Text.plain(i + "/" + audio.waves.length));
 
 		audio.play(aLL);
 		// audio.play(aRL);
@@ -202,8 +201,8 @@ public class Cinema {
 			return H + M + S + m;
 		}
 
-		private static Subtitles loadSRT(final File f) throws Exception {
-			final var s = Files.readString(f.toPath()).split("\n\n");
+		private static Subtitles loadSRT(final Path p) throws Exception {
+			final var s = Files.readString(p).split("\n\n");
 			final var o = new Subtitle[s.length];
 			for (var i = 0; i < s.length; i++) {
 				final var j = s[i].split("\n");

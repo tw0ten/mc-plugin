@@ -40,6 +40,11 @@ public class Audio {
 	}
 
 	public Audio(final float[] waves, final float frequency) {
+		if (true) {
+			this.waves = new Wave[0];
+			return;
+		}
+
 		if (frequency < Audio.frequency) {
 			throw new IllegalArgumentException("TODO freq < target");
 		}
@@ -50,13 +55,12 @@ public class Audio {
 
 		for (var i = 0; i < this.waves.length; i++) {
 			final var frame = Arrays.copyOfRange(waves, i * chunk, Math.min((i + 1) * chunk, waves.length));
-			final var pitch = 0; // detectPitchYIN(frame, frequency);
-			var volume = 0f;
-			for (final var f : frame)
-				volume += f;
-			// bigger chunks, overlapping? study audio theory instead of guessing and crying
-			// to ai
-			this.waves[i] = new Wave(1 + volume / frame.length, pitch);
+			final var pitchAndVolume = PitchVolumeAnalyzer.analyzePitchAndVolume(waves,
+					Math.max(0, i * chunk - frame.length), Math.min(i * chunk + frame.length * 2, waves.length),
+					frequency);
+			final var pitch = (float) pitchAndVolume.getPitchHz() / frequency / 2f; // detectPitchYIN(frame, frequency);
+			final var volume = (float) (pitchAndVolume.getVolumeDb() + 100f) / 50f;
+			this.waves[i] = new Wave(volume, pitch);
 		}
 	}
 
@@ -111,9 +115,11 @@ public class Audio {
 	}
 
 	private static float[] normalize(final float[] i) {
-		var m = Float.MIN_VALUE;
+		var m = 0f;
 		for (final var f : i)
-			m = Math.max(m, f);
+			m = Math.max(m, Math.abs(f));
+		if (m == 0)
+			return i;
 		final var o = new float[i.length];
 		for (var j = 0; j < i.length; j++)
 			o[j] = i[j] / m;
@@ -123,9 +129,7 @@ public class Audio {
 	public static Audio load(final File f) throws Exception {
 		final var audioStream = AudioSystem.getAudioInputStream(f);
 		final var format = audioStream.getFormat();
-		// for channels
-		readBytes(audioStream, format);
-		final var audio = new Audio(new float[] { 0 }, format.getSampleRate());
+		final var audio = new Audio(readBytes(audioStream, format)[0], format.getSampleRate());
 		plugin.Plugin.instance.getLogger()
 				.info(f.getName() + ": "
 						+ format.getChannels() + " channels, " + audio.waves.length + " waves, "
@@ -138,7 +142,7 @@ public class Audio {
 		final var bitDepth = format.getSampleSizeInBits();
 		final var isBigEndian = format.isBigEndian();
 		final var channels = format.getChannels();
-		final var bytes = stream.readNBytes(4410000);
+		final var bytes = stream.readAllBytes();
 		final var samples = new float[channels][bytes.length * 8 / bitDepth / channels];
 
 		switch (bitDepth) {
@@ -158,5 +162,98 @@ public class Audio {
 		}
 
 		return samples;
+
+	}
+
+
+	// deepseek bs, no clue if it works or not
+	// certainly takes its time though
+
+	public class PitchVolumeAnalyzer {
+
+		public static class PitchVolumeResult {
+			private final double pitchHz;
+			private final double volumeDb;
+
+			public PitchVolumeResult(double pitchHz, double volumeDb) {
+				this.pitchHz = pitchHz;
+				this.volumeDb = volumeDb;
+			}
+
+			public double getPitchHz() {
+				return pitchHz;
+			}
+
+			public double getVolumeDb() {
+				return volumeDb;
+			}
+		}
+
+		public static PitchVolumeResult analyzePitchAndVolume(float[] audioData, int startIndex, int endIndex,
+				float sampleRate) {
+			// Calculate volume in dB
+			double volumeDb = calculateVolumeDb(audioData, startIndex, endIndex);
+
+			// Calculate pitch in Hz
+			double pitchHz = calculatePitch(audioData, startIndex, endIndex, sampleRate);
+
+			return new PitchVolumeResult(pitchHz, volumeDb);
+		}
+
+		private static double calculateVolumeDb(float[] audioData, int start, int end) {
+			int length = end - start;
+			if (length <= 0)
+				return -Double.MAX_VALUE;
+
+			double sumSquares = 0.0;
+			for (int i = start; i < end; i++) {
+				float sample = audioData[i];
+				sumSquares += sample * sample;
+			}
+			double rms = Math.sqrt(sumSquares / length);
+			// Avoid log(0) by adding a tiny value to prevent -Infinity
+			return 20 * Math.log10(rms + 1e-16);
+		}
+
+		private static double calculatePitch(float[] audioData, int start, int end, float sampleRate) {
+			int length = end - start;
+			if (length < 2)
+				return 0.0;
+
+			// Remove DC offset (mean) to improve autocorrelation
+			float[] samples = new float[length];
+			double mean = 0.0;
+			for (int i = start; i < end; i++) {
+				mean += audioData[i];
+			}
+			mean /= length;
+			for (int i = 0; i < length; i++) {
+				samples[i] = (float) (audioData[start + i] - mean);
+			}
+
+			// Autocorrelation to find the best lag
+			int maxLag = Math.min(length / 2, 2000); // Limit lag to avoid low frequencies
+			double maxCorrelation = -1;
+			int bestLag = 0;
+
+			for (int lag = 1; lag < maxLag; lag++) {
+				double correlation = 0;
+				for (int i = 0; i < length - lag; i++) {
+					correlation += samples[i] * samples[i + lag];
+				}
+				correlation /= (length - lag); // Normalize by number of terms
+
+				if (correlation > maxCorrelation) {
+					maxCorrelation = correlation;
+					bestLag = lag;
+				}
+			}
+
+			// Apply a threshold to avoid false positives (e.g., noise)
+			if (maxCorrelation < 0.1)
+				return 0.0;
+
+			return sampleRate / bestLag;
+		}
 	}
 }

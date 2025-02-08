@@ -3,6 +3,7 @@ package plugin.etc.art;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.NamespacedKey;
@@ -33,8 +34,17 @@ public class Library {
 		Command.add(new Command.Admin("library") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
+				if (args.length < 1)
+					return;
 				switch (args[0]) {
 					case "find":
+						if (args.length < 2) {
+							final var bs = books();
+							for (final var b : bs)
+								sender.sendMessage(b.toString());
+							sender.sendMessage("" + bs.length);
+							return;
+						}
 						final var s = String.join(" ", args).substring(args[0].length() + 1);
 						sender.sendMessage(Text.plain("\"" + s + "\""));
 						for (final var b : books()) {
@@ -43,15 +53,15 @@ public class Library {
 								continue;
 							sender.sendMessage(Text.plain(r));
 						}
-						break;
+						return;
 					case "get":
 						if (sender instanceof final Player p) {
-							int i;
+							var i = 0;
+
 							var title = "";
 							for (i = 1; i < args.length; i++) {
 								title += args[i];
-
-								if (!args[i].endsWith(File.pathSeparator))
+								if (!args[i].endsWith("/"))
 									break;
 								title = title.substring(0, title.length() - 1);
 								title += " ";
@@ -60,7 +70,7 @@ public class Library {
 							var author = "";
 							for (i++; i < args.length; i++) {
 								author += args[i];
-								if (!args[i].endsWith(File.pathSeparator))
+								if (!args[i].endsWith("/"))
 									break;
 								author = author.substring(0, author.length() - 1);
 								author += " ";
