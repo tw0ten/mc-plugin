@@ -11,6 +11,7 @@ import org.bukkit.command.TabCompleter;
 public abstract class Command {
 	public final String label;
 
+	// TODO: actual command constructors
 	public Command(final String label) {
 		this.label = label;
 	}

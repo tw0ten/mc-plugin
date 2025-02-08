@@ -99,7 +99,7 @@ public class Image {
 							}
 							try {
 								Item.n(p, Image.map(ImageIO.read(URI.create(args[1]).toURL())));
-							} catch (Exception e) {
+							} catch (final Exception e) {
 							}
 							return;
 						case "screen":

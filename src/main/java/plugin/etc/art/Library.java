@@ -1,20 +1,124 @@
 package plugin.etc.art;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.NamespacedKey;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import plugin.World;
+import plugin.etc.Book;
+import plugin.Command;
+import plugin.Item;
 import plugin.Plugin;
+import plugin.Text;
 
 public class Library {
 	private final org.bukkit.World w;
 
 	public Library() {
-		final var key = new NamespacedKey(Plugin.instance, "library");
-		var w = Plugin.instance.getServer().getWorld(key);
-		if (w == null) {
-			w = World.voidWorld(key);
-			World.idle(w);
+		{
+			final var key = new NamespacedKey(Plugin.instance, "library");
+			var w = Plugin.instance.getServer().getWorld(key);
+			if (w == null) {
+				w = World.voidWorld(key);
+				World.idle(w);
+			}
+			this.w = w;
 		}
-		this.w = w;
+
+		Command.add(new Command.Admin("library") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				switch (args[0]) {
+					case "find":
+						final var s = String.join(" ", args).substring(args[0].length() + 1);
+						sender.sendMessage(Text.plain("\"" + s + "\""));
+						for (final var b : books()) {
+							final var r = b.find(s);
+							if (r == null)
+								continue;
+							sender.sendMessage(Text.plain(r));
+						}
+						break;
+					case "get":
+						if (sender instanceof final Player p) {
+							int i;
+							var title = "";
+							for (i = 1; i < args.length; i++) {
+								title += args[i];
+
+								if (!args[i].endsWith(File.pathSeparator))
+									break;
+								title = title.substring(0, title.length() - 1);
+								title += " ";
+							}
+
+							var author = "";
+							for (i++; i < args.length; i++) {
+								author += args[i];
+								if (!args[i].endsWith(File.pathSeparator))
+									break;
+								author = author.substring(0, author.length() - 1);
+								author += " ";
+							}
+
+							Item.n(p, loadBook(title, author).toItems());
+						}
+						return;
+					default:
+				}
+			}
+
+			@Override
+			protected List<String> complete(final CommandSender sender, final String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("get", "find");
+					default:
+				}
+				return List.of();
+			}
+		});
 	}
+
+	private static File file() {
+		return Plugin.instance.getDataPath().resolve("library").toFile();
+	}
+
+	public static Book[] books() {
+		final var books = new ArrayList<Book>();
+		final var library = file();
+		for (final var author : library.listFiles()) {
+			if (author.isFile()) {
+				books.add(loadBook(author.getName(), null));
+				continue;
+			}
+
+			for (final var title : author.listFiles())
+				books.add(loadBook(title.getName(), author.getName()));
+		}
+		return books.toArray(Book[]::new);
+	}
+
+	public static Book loadBook(final String title, final String author) {
+		final var f = file().toPath();
+		var p = f;
+		if (author != null)
+			p = p.resolve(author);
+		p = p.resolve(title);
+
+		if (!p.getParent().equals(f) && !p.getParent().getParent().equals(f))
+			return new Book("😐");
+
+		try {
+			return new Book(title, author, Files.readString(p));
+		} catch (final Exception e) {
+			return Book.exception(e);
+		}
+	}
+
 }

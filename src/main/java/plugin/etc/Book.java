@@ -1,24 +1,18 @@
 package plugin.etc;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BookMeta.Generation;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import plugin.Command;
-import plugin.Item;
 import plugin.Plugin;
 import plugin.Text;
 
@@ -182,98 +176,9 @@ public class Book {
 		return "\"" + this.title + "\" - " + this.author;
 	}
 
-	public static Book[] books() {
-		final var books = new ArrayList<Book>();
-		final var library = Plugin.instance.getDataPath().resolve("library").toFile();
-		for (final var author : library.listFiles()) {
-			if (author.isFile()) {
-				books.add(Book.load(author.getName(), null));
-				continue;
-			}
-
-			for (final var title : author.listFiles())
-				books.add(Book.load(title.getName(), author.getName()));
-		}
-		return books.toArray(Book[]::new);
-	}
-
 	public static Book exception(final Exception e) {
 		final var sw = new StringWriter();
 		e.printStackTrace(new PrintWriter(sw));
 		return new Book(e.getClass().getSimpleName(), sw.toString());
-	}
-
-	public static Book load(final String title, final String author) {
-		final var lib = Plugin.instance.getDataPath().resolve("library");
-
-		var p = lib;
-		if (author != null)
-			p = p.resolve(author);
-		p = p.resolve(title);
-
-		if (!p.getParent().equals(lib) && !p.getParent().getParent().equals(lib))
-			return new Book("😐");
-
-		try {
-			return new Book(title, author, Files.readString(p));
-		} catch (final Exception e) {
-			return Book.exception(e);
-		}
-	}
-
-	public static void load() {
-		Command.add(new Command.Admin("book") {
-			@Override
-			protected void run(CommandSender sender, String[] args) {
-				switch (args[0]) {
-					case "find":
-						final var s = String.join(" ", args).substring(args[0].length() + 1);
-						sender.sendMessage(Text.plain("\"" + s + "\""));
-						for (final var b : Book.books()) {
-							final var r = b.find(s);
-							if (r == null)
-								continue;
-							sender.sendMessage(Text.plain(r));
-						}
-						break;
-					case "get":
-						if (sender instanceof Player p) {
-							int i;
-							var title = "";
-							for (i = 1; i < args.length; i++) {
-								title += args[i];
-
-								if (!args[i].endsWith(File.pathSeparator))
-									break;
-								title = title.substring(0, title.length() - 1);
-								title += " ";
-							}
-
-							var author = "";
-							for (i++; i < args.length; i++) {
-								author += args[i];
-								if (!args[i].endsWith(File.pathSeparator))
-									break;
-								author = author.substring(0, author.length() - 1);
-								author += " ";
-							}
-
-							Item.n(p, Book.load(title, author).toItems());
-						}
-						return;
-					default:
-				}
-			}
-
-			@Override
-			protected List<String> complete(final CommandSender sender, final String[] args) {
-				switch (args.length) {
-					case 1:
-						return List.of("get", "find");
-					default:
-				}
-				return List.of();
-			}
-		});
 	}
 }

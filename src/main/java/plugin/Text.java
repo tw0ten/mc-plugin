@@ -1,6 +1,9 @@
 package plugin;
 
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
+import org.bukkit.block.sign.Side;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -35,6 +38,17 @@ public class Text {
 		e.setInvulnerable(true);
 		e.setInvisible(true);
 		return e;
+	}
+
+	public static void sign(Block block, Component... s) {
+		final var sign = (Sign) block.getState();
+		final var side = sign.getSide(Side.FRONT);
+
+		for (var i = 0; i < s.length; i++)
+			if (s[i] != null)
+				side.line(i, s[i]);
+
+		sign.update();
 	}
 
 	public static Component player(final Player p) {

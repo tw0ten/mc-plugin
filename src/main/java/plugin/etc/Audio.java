@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
 import org.bukkit.Location;
@@ -111,7 +112,7 @@ public class Audio {
 
 	private static float[] normalize(final float[] i) {
 		var m = Float.MIN_VALUE;
-		for (var f : i)
+		for (final var f : i)
 			m = Math.max(m, f);
 		final var o = new float[i.length];
 		for (var j = 0; j < i.length; j++)
@@ -122,21 +123,23 @@ public class Audio {
 	public static Audio load(final File f) throws Exception {
 		final var audioStream = AudioSystem.getAudioInputStream(f);
 		final var format = audioStream.getFormat();
-		final var bytes = audioStream.readAllBytes();
-		audioStream.close();
-		final var audio = new Audio(normalize(readBytes(bytes, format)[0]), format.getSampleRate());
+		// for channels
+		readBytes(audioStream, format);
+		final var audio = new Audio(new float[] { 0 }, format.getSampleRate());
 		plugin.Plugin.instance.getLogger()
 				.info(f.getName() + ": "
 						+ format.getChannels() + " channels, " + audio.waves.length + " waves, "
 						+ audio.waves.length / Audio.frequency + " seconds");
+		audioStream.close();
 		return audio;
 	}
 
-	private static float[][] readBytes(final byte[] bytes, final AudioFormat format) {
+	private static float[][] readBytes(final AudioInputStream stream, final AudioFormat format) throws Exception {
 		final var bitDepth = format.getSampleSizeInBits();
 		final var isBigEndian = format.isBigEndian();
 		final var channels = format.getChannels();
-		final var samples = new float[channels][bytes.length * Byte.SIZE / bitDepth / channels];
+		final var bytes = stream.readNBytes(4410000);
+		final var samples = new float[channels][bytes.length * 8 / bitDepth / channels];
 
 		switch (bitDepth) {
 			case 16:

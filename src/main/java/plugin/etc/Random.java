@@ -34,6 +34,7 @@ import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import plugin.Command;
 import plugin.Item;
+import plugin.etc.art.Library;
 
 public class Random {
 	private static final java.util.Random r = new java.util.Random();
@@ -84,8 +85,8 @@ public class Random {
 	}
 
 	public static Book book() {
-		final var b = pick(Book.books());
-		return Book.load(b.title, b.author);
+		final var b = pick(Library.books());
+		return Library.loadBook(b.title, b.author);
 	}
 
 	public static Material block() {
