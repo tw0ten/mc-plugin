@@ -50,6 +50,13 @@ public abstract class Command {
 				sender.sendMessage("pong");
 			}
 		});
+		add(new Command("disconnect") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				if (sender instanceof final org.bukkit.entity.Player p)
+					p.kick(Text.plain("/" + this.label));
+			}
+		});
 		add(new Command("echo") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
@@ -65,6 +72,7 @@ public abstract class Command {
 	private static List<Command> commands = new ArrayList<>();
 
 	public static void register(final Command cmd) {
+		// final var map = Bukkit.getCommandMap()
 		final var command = Plugin.instance.getCommand(cmd.label);
 
 		command.setDescription("description");

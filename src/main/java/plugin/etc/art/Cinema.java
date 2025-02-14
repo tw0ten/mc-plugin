@@ -74,6 +74,11 @@ public class Cinema {
 						}
 						audio.i = Integer.parseInt(args[1]);
 						return;
+					case "play":
+						if (args.length < 2)
+							return;
+						play(Path.of(args[1]));
+						return;
 					default:
 				}
 			}
@@ -82,7 +87,7 @@ public class Cinema {
 			protected List<String> complete(final CommandSender sender, final String[] args) {
 				switch (args.length) {
 					case 1:
-						return List.of("seek");
+						return List.of("seek", "play");
 					default:
 				}
 				return List.of();
@@ -100,6 +105,7 @@ public class Cinema {
 		{
 			this.subsL = new Location(w, 0.5, 0, -9);
 
+			// doesnt work? world not loaded ig
 			for (final var e : w.getEntitiesByClass(ArmorStand.class))
 				if (e.isInvulnerable())
 					e.remove();
@@ -126,7 +132,6 @@ public class Cinema {
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	private final Entity e1, e2;

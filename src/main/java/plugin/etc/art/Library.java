@@ -1,9 +1,8 @@
 package plugin.etc.art;
 
-import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.NamespacedKey;
@@ -95,19 +94,18 @@ public class Library {
 		});
 	}
 
-	private static File file() {
-		return Plugin.instance.getDataPath().resolve("library").toFile();
+	private static Path path() {
+		return Plugin.instance.getDataPath().resolve("library");
 	}
 
 	public static Book[] books() {
 		final var books = new ArrayList<Book>();
-		final var library = file();
+		final var library = path().toFile();
 		for (final var author : library.listFiles()) {
 			if (author.isFile()) {
 				books.add(loadBook(author.getName(), null));
 				continue;
 			}
-
 			for (final var title : author.listFiles())
 				books.add(loadBook(title.getName(), author.getName()));
 		}
@@ -115,13 +113,13 @@ public class Library {
 	}
 
 	public static Book loadBook(final String title, final String author) {
-		final var f = file().toPath();
-		var p = f;
+		final var library = path();
+		var p = library;
 		if (author != null)
 			p = p.resolve(author);
 		p = p.resolve(title);
 
-		if (!p.getParent().equals(f) && !p.getParent().getParent().equals(f))
+		if (!p.getParent().equals(library) && !p.getParent().getParent().equals(library))
 			return new Book("😐");
 
 		try {

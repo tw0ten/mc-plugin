@@ -35,8 +35,8 @@ public class Event implements Listener {
 	}
 
 	private void tick(final int tick) {
-		if ((tick + 1) % Random.itemInterval == 0)
-			for (final var p : Player.s())
+		for (final var p : Player.s())
+			if ((p.getTicksLived() + 1) % Random.itemInterval == 0)
 				if (!p.isDead() && p.getGameMode() == GameMode.SURVIVAL)
 					Item.n(p, Random.item());
 

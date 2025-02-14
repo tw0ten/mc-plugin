@@ -4,4 +4,4 @@ set -e
 mvn install
 
 cd io
-cp o/target/*.jar i/plugins
+cp o/target/main-*.jar i/plugins/plugin.jar

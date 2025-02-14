@@ -84,6 +84,17 @@ public class Image {
 		public final static float interval = scale * 0.125f;
 	}
 
+	private static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
+		final var tmp = img.getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
+		final var dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+
+		final var g2d = dimg.createGraphics();
+		g2d.drawImage(tmp, 0, 0, null);
+		g2d.dispose();
+
+		return dimg;
+	}
+
 	public static void load() {
 		Command.add(new Command("image") {
 			@Override
@@ -98,7 +109,8 @@ public class Image {
 								return;
 							}
 							try {
-								Item.n(p, Image.map(ImageIO.read(URI.create(args[1]).toURL())));
+								final var i = ImageIO.read(URI.create(args[1]).toURL());
+								Item.n(p, Image.map(resize(i, Image.mapDims.w, Image.mapDims.h)));
 							} catch (final Exception e) {
 							}
 							return;
