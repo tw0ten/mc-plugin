@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -18,6 +17,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
@@ -25,6 +25,7 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.ShieldMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.inventory.meta.SuspiciousStewMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
 import org.bukkit.potion.PotionType;
 
 import com.google.common.collect.Lists;
@@ -34,6 +35,7 @@ import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import plugin.Command;
 import plugin.Item;
+import plugin.Plugin;
 import plugin.etc.art.Library;
 
 public class Random {
@@ -99,10 +101,15 @@ public class Random {
 
 	private static Pattern pattern() {
 		return new Pattern(dyeColor(),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).stream()));
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).iterator()));
 	}
 
-	public static final int itemInterval = 20 * 15;
+	private static ArmorTrim trim() {
+		return new ArmorTrim(pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL).iterator()),
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN).iterator()));
+	}
+
+	public static final int itemInterval = (int) Plugin.tps() * 15;
 
 	private static final Material[] pottery = Arrays.stream(Item.s)
 			.filter(i -> i.name().endsWith("_POTTERY_SHERD")).toArray(Material[]::new);
@@ -141,6 +148,32 @@ public class Random {
 			case LEATHER_BOOTS:
 				return Item.s(Item.m(Item.i(m), e -> {
 					((LeatherArmorMeta) e).setColor(color());
+					((ArmorMeta) e).setTrim(trim());
+					return e;
+				}));
+
+			case CHAINMAIL_HELMET:
+			case CHAINMAIL_CHESTPLATE:
+			case CHAINMAIL_LEGGINGS:
+			case CHAINMAIL_BOOTS:
+			case GOLDEN_HELMET:
+			case GOLDEN_CHESTPLATE:
+			case GOLDEN_LEGGINGS:
+			case GOLDEN_BOOTS:
+			case IRON_HELMET:
+			case IRON_CHESTPLATE:
+			case IRON_LEGGINGS:
+			case IRON_BOOTS:
+			case DIAMOND_HELMET:
+			case DIAMOND_CHESTPLATE:
+			case DIAMOND_LEGGINGS:
+			case DIAMOND_BOOTS:
+			case NETHERITE_HELMET:
+			case NETHERITE_CHESTPLATE:
+			case NETHERITE_LEGGINGS:
+			case NETHERITE_BOOTS:
+				return Item.s(Item.m(Item.i(m), e -> {
+					((ArmorMeta) e).setTrim(trim());
 					return e;
 				}));
 
@@ -187,7 +220,7 @@ public class Random {
 
 			case PLAYER_HEAD:
 				return Item.s(Item.m(Item.i(m), i -> {
-					((SkullMeta) i).setOwningPlayer(pick(Bukkit.getOfflinePlayers()));
+					((SkullMeta) i).setOwningPlayer(pick(plugin.Player.offline()));
 					return i;
 				}));
 
@@ -196,10 +229,9 @@ public class Random {
 
 			case SUSPICIOUS_STEW:
 				return Item.s(Item.m(Item.i(m), i -> {
-					((SuspiciousStewMeta) i).addCustomEffect(
-							SuspiciousEffectEntry
-									.create(pick(PotionType.values()).getPotionEffects().getFirst().getType(), 20 * 30),
-							true);
+					((SuspiciousStewMeta) i).addCustomEffect(SuspiciousEffectEntry.create(
+							pick(PotionType.values()).getPotionEffects().getFirst().getType(),
+							(int) Plugin.tps() * 30), true);
 					return i;
 				}));
 

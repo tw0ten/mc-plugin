@@ -21,8 +21,8 @@ public class Library {
 
 	public Library() {
 		{
-			final var key = new NamespacedKey(Plugin.instance, "library");
-			var w = Plugin.instance.getServer().getWorld(key);
+			final var key = new NamespacedKey(Plugin.i(), "library");
+			var w = Plugin.s().getWorld(key);
 			if (w == null) {
 				w = World.voidWorld(key);
 				World.idle(w);
@@ -95,7 +95,7 @@ public class Library {
 	}
 
 	private static Path path() {
-		return Plugin.instance.getDataPath().resolve("library");
+		return Plugin.i().getDataPath().resolve("library");
 	}
 
 	public static Book[] books() {

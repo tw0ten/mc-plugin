@@ -22,8 +22,8 @@ public class Item {
 		return i;
 	}
 
-	public static ItemStack[] s(final ItemStack i) {
-		return new ItemStack[] { i };
+	public static ItemStack[] s(final ItemStack... i) {
+		return i;
 	}
 
 	public static void n(final Player p, final ItemStack[] items) {

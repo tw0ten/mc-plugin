@@ -1,9 +1,12 @@
 package plugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.Statistic;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
@@ -40,7 +43,7 @@ public abstract class Command {
 		add(new Admin("reload") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
-				Bukkit.reload();
+				Plugin.s().reload();
 				sender.sendMessage("reloaded");
 			}
 		});
@@ -63,39 +66,78 @@ public abstract class Command {
 				sender.sendMessage(String.join(" ", args));
 			}
 		});
+		add(new Command("statistics") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				if (args.length < 1)
+					return;
+				final var s = Statistic.valueOf(args[0]);
+				sender.sendMessage(s.name());
+				for (final var p : Player.offline())
+					sender.sendMessage(p.getName() + ": " +
+							(args.length > 1 ? p.getStatistic(s, Material.valueOf(args[1])) : p.getStatistic(s)));
+			}
+
+			@Override
+			protected List<String> complete(final CommandSender sender, final String[] args) {
+				switch (args.length) {
+					case 1:
+						return Command.complete(Arrays.stream(Statistic.values()).map(i -> {
+							return i.name();
+						}), args[0]);
+					case 2:
+						if (Statistic.valueOf(args[0]).isSubstatistic())
+							return materials(args[1]);
+					default:
+				}
+				return List.of();
+			}
+
+		});
 
 		for (final var cmd : commands)
 			register(cmd);
 		commands.clear();
 	}
 
+	private static List<String> materials(final String arg) {
+		return complete(Arrays.stream(Material.values()).map(i -> {
+			return i.name();
+		}), arg.toUpperCase());
+	}
+
+	private static List<String> complete(final Stream<String> stream, final String arg) {
+		return stream.filter(i -> {
+			return i.startsWith(arg);
+		}).toList();
+	}
+
 	private static List<Command> commands = new ArrayList<>();
 
-	public static void register(final Command cmd) {
-		// final var map = Bukkit.getCommandMap()
-		final var command = Plugin.instance.getCommand(cmd.label);
+	public static void register(final Command command) {
+		final var cmd = Plugin.i().getCommand(command.label);
 
-		command.setDescription("description");
-		command.setUsage("usage");
+		cmd.setDescription("description");
+		cmd.setUsage("usage");
 
-		command.setExecutor(new CommandExecutor() {
+		cmd.setExecutor(new CommandExecutor() {
 			@Override
-			public boolean onCommand(final CommandSender sender, final org.bukkit.command.Command command,
+			public boolean onCommand(final CommandSender sender, final org.bukkit.command.Command cmd,
 					final String label, final String[] args) {
-				if (!cmd.perms(sender))
+				if (!command.perms(sender))
 					return false;
-				cmd.run(sender, args);
+				command.run(sender, args);
 				return true;
 			}
 		});
 
-		command.setTabCompleter(new TabCompleter() {
+		cmd.setTabCompleter(new TabCompleter() {
 			@Override
-			public List<String> onTabComplete(final CommandSender sender, final org.bukkit.command.Command command,
+			public List<String> onTabComplete(final CommandSender sender, final org.bukkit.command.Command cmd,
 					final String label, final String[] args) {
-				if (!cmd.perms(sender))
+				if (!command.perms(sender))
 					return List.of();
-				return cmd.complete(sender, args);
+				return command.complete(sender, args);
 			}
 		});
 	}

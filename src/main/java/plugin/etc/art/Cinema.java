@@ -37,12 +37,15 @@ public class Cinema {
 	private Subtitles subtitles;
 	private Audio audio;
 
-	private final static int fps = 5, tpf = 20 / fps;
+	public boolean paused = false;
+	private String title;
+
+	private final static int fps = 5, tpf = (int) Audio.frequency / fps;
 
 	public Cinema() {
 		{
-			final var key = new NamespacedKey(Plugin.instance, "cinema");
-			var w = Plugin.instance.getServer().getWorld(key);
+			final var key = new NamespacedKey(Plugin.i(), "cinema");
+			var w = Plugin.s().getWorld(key);
 			if (w == null) {
 				w = World.voidWorld(key);
 				World.idle(w);
@@ -69,15 +72,22 @@ public class Cinema {
 				switch (args[0]) {
 					case "seek":
 						if (args.length < 2) {
-							sender.sendMessage(audio.i + "/" + audio.waves.length);
+							sender.sendMessage(
+									"\"" + title + "\"" + (paused ? " paused" : "") + " " +
+											audio.i + "/" + audio.waves.length);
 							return;
 						}
 						audio.i = Integer.parseInt(args[1]);
 						return;
 					case "play":
-						if (args.length < 2)
+						if (args.length < 2) {
+							paused = false;
 							return;
+						}
 						play(Path.of(args[1]));
+						return;
+					case "pause":
+						paused = true;
 						return;
 					default:
 				}
@@ -87,7 +97,7 @@ public class Cinema {
 			protected List<String> complete(final CommandSender sender, final String[] args) {
 				switch (args.length) {
 					case 1:
-						return List.of("seek", "play");
+						return List.of("seek", "play", "pause");
 					default:
 				}
 				return List.of();
@@ -102,25 +112,21 @@ public class Cinema {
 		this.aLL = new Location(w, -6.8, 3.5, 0.5);
 		this.aRL = new Location(w, +7.8, 3.5, 0.5);
 
-		{
-			this.subsL = new Location(w, 0.5, 0, -9);
+		this.subsL = new Location(w, 0.5, 0, -9);
+		w.getEntitiesByClass(ArmorStand.class).forEach(e -> {
+			if (e.isInvulnerable())
+				e.remove();
+		});
+		e1 = Text.nametag(subsL.clone());
+		e2 = Text.nametag(subsL.clone().add(0, -0.25, 0));
 
-			// doesnt work? world not loaded ig
-			for (final var e : w.getEntitiesByClass(ArmorStand.class))
-				if (e.isInvulnerable())
-					e.remove();
-
-			e1 = Text.nametag(subsL.clone());
-			e2 = Text.nametag(subsL.clone().add(0, -0.25, 0));
-		}
-
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.instance, () -> {
-			if (this.w.getPlayers().isEmpty())
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.i(), () -> {
+			if (w.getPlayers().isEmpty())
 				return;
 			this.tick();
 		}, 0, 1);
 
-		play(Plugin.instance.getDataPath().resolve("movie"));
+		play(Plugin.i().getDataPath().resolve("movie"));
 	}
 
 	public void play(final Path movie) {
@@ -128,7 +134,9 @@ public class Cinema {
 			this.subtitles = Subtitles.loadSRT(movie.resolve("subtitles"));
 			this.audio = Audio.load(movie.resolve("audio").toFile());
 			this.frames = movie.resolve("frames");
-			Text.sign(info, Text.plain(movie.toRealPath().toFile().getName()));
+			this.title = movie.toRealPath().toFile().getName();
+			this.paused = false;
+			Text.sign(info, Text.plain(title));
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
@@ -137,25 +145,14 @@ public class Cinema {
 	private final Entity e1, e2;
 
 	private void writeNametag(final String text) {
-		final var s1 = text == null ? null : text.split("\n")[0];
-		final var s2 = s1 != null && s1.length() < text.length() ? text.split("\n")[1] : null;
-		e1.customName(s1 == null ? Text.empty() : Text.plain(s1));
-		e2.customName(s2 == null ? Text.empty() : Text.plain(s2));
+		final var s1 = text.split("\n")[0];
+		final var s2 = s1.length() < text.length() ? text.split("\n")[1] : "";
+		e1.customName(Text.plain(s1));
+		e2.customName(Text.plain(s2));
 	}
 
 	private void tick() {
-		final var i = audio.i;
-
-		Text.sign(info, null, Text.plain(i + "/" + audio.waves.length));
-
-		audio.play(aLL);
-		// audio.play(aRL);
-		if (i % 10 == 0) {
-			w.spawnParticle(Particle.NOTE, aLL, 1);
-			w.spawnParticle(Particle.NOTE, aRL, 1);
-		}
-
-		writeNametag(subtitles.at(i));
+		final var i = audio.i / 2;
 
 		if (i % tpf == 0) {
 			try {
@@ -164,6 +161,20 @@ public class Cinema {
 			} catch (final Exception e) {
 			}
 		}
+
+		if (paused)
+			return;
+
+		Text.sign(info, null, Text.plain(i + "/" + audio.waves.length / 2));
+
+		audio.play(aLL);
+		audio.play(aRL);
+		if (i % 10 == 0) {
+			w.spawnParticle(Particle.NOTE, aLL, 1);
+			w.spawnParticle(Particle.NOTE, aRL, 1);
+		}
+
+		writeNametag(subtitles.at(i));
 	}
 
 	private static class Subtitles {
@@ -187,9 +198,9 @@ public class Cinema {
 
 		private String at(final int tick) {
 			for (var i = 0; i < subs.length; i++)
-				if (subs[i].begins * 20 <= tick && subs[i].ends * 20 >= tick)
+				if (subs[i].begins * Audio.frequency <= tick && subs[i].ends * Audio.frequency >= tick)
 					return subs[i].toString();
-			return null;
+			return "";
 		}
 
 		private Subtitles(final Subtitle[] subs) {

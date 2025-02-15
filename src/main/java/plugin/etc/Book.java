@@ -107,7 +107,7 @@ public class Book {
 		final List<ItemStack> books = new ArrayList<>();
 
 		while (s.length() > 0) {
-			Plugin.instance.getLogger().info(this + " " + s.length());
+			Plugin.i().getLogger().info(this + " " + s.length());
 
 			final var b = defaultItem();
 
@@ -135,7 +135,7 @@ public class Book {
 			books.set(j, i);
 		}
 
-		Plugin.instance.getLogger().info(this + " (" + books.size() + ")");
+		Plugin.i().getLogger().info(this + " (" + books.size() + ")");
 		return books.toArray(ItemStack[]::new);
 	}
 
