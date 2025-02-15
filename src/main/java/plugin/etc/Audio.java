@@ -14,13 +14,6 @@ import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
 
 public class Audio {
-	public static final float frequency = plugin.Plugin.tps();
-
-	private final Sound sound = Sound.BLOCK_NOTE_BLOCK_HARP;
-	public float volume = 1f;
-	public int i = 0;
-	public final Wave[] waves;
-
 	public static class Wave {
 		final float volume;
 		final float pitch;
@@ -36,6 +29,33 @@ public class Audio {
 		}
 	}
 
+	public static final float frequency = plugin.Plugin.tps();
+	public static Audio load(final File f) throws Exception {
+		final var dispatcher = AudioDispatcherFactory.fromFile(f, 1024, 0);
+		dispatcher.setZeroPadLastBuffer(true);
+
+		final var waves = new ArrayList<Wave>();
+
+		final var handler = new PitchDetectionHandler() {
+			@Override
+			public void handlePitch(final PitchDetectionResult pitchDetectionResult, final AudioEvent audioEvent) {
+				waves.add(new Wave(1, pitchDetectionResult.getPitch()));
+			}
+		};
+
+		dispatcher.addAudioProcessor(
+				new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 44100, 1024, handler));
+		dispatcher.run();
+
+		return new Audio(waves.toArray(Wave[]::new));
+	}
+	private final Sound sound = Sound.BLOCK_NOTE_BLOCK_HARP;
+	public float volume = 1f;
+
+	public int i = 0;
+
+	public final Wave[] waves;
+
 	public Audio(final Wave[] waves) {
 		this.waves = waves;
 	}
@@ -50,27 +70,5 @@ public class Audio {
 		plugin.Plugin.i().getLogger().info(i + "/" + this.waves.length + " " + f);
 
 		l.getWorld().playSound(l, this.sound, SoundCategory.RECORDS, this.volume * f.volume, f.pitch);
-	}
-
-	public static Audio load(final File f) throws Exception {
-		final var dispatcher = AudioDispatcherFactory.fromFile(f, (int) (1024 ), 512);
-
-		final var waves = new ArrayList<Wave>();
-		final var handler = new PitchDetectionHandler() {
-			@Override
-			public void handlePitch(final PitchDetectionResult pitchDetectionResult, final AudioEvent audioEvent) {
-				final var a = audioEvent.getFloatBuffer();
-				var f = 0f;
-				for (final var x : a)
-					f += x;
-				waves.add(new Wave(f / a.length, pitchDetectionResult.getPitch()));
-			}
-		};
-
-		dispatcher.addAudioProcessor(
-				new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 44100, 1024, handler));
-		dispatcher.run();
-
-		return new Audio(waves.toArray(Wave[]::new));
 	}
 }

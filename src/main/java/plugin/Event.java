@@ -42,7 +42,7 @@ public class Event implements Listener {
 				.appendSpace()
 				.append(Text.plain(server.getMinecraftVersion()).color(TextColor.color(0xff, 0xff, 0xff)))
 				.appendSpace()
-				.append(Text.plain(Math.round(tps * 100) + "%").color(Text.qualityGradient(tps)))
+				.append(Text.plain(String.valueOf(Math.round(tps * 100) / 100f)).color(Text.qualityGradient(tps)))
 				.appendSpace()
 				.append(Text.plain((System.currentTimeMillis() - Plugin.i().uptime) / 1000 + "s"))
 				.appendNewline()

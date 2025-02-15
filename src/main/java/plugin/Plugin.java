@@ -11,10 +11,7 @@ import plugin.etc.art.Library;
 import plugin.etc.art.Orchestra;
 
 public class Plugin extends JavaPlugin {
-	public final FileConfiguration config = getConfig();
 	private static Plugin instance;
-
-	public final long uptime;
 
 	public static float tps() {
 		return s().getServerTickManager().getTickRate();
@@ -28,11 +25,16 @@ public class Plugin extends JavaPlugin {
 		return instance.getServer();
 	}
 
+	public final FileConfiguration config = getConfig();
+
+	public final long uptime;
+
 	public Plugin() {
 		super();
-		getLogger().info("created");
 		this.uptime = System.currentTimeMillis();
 		instance = this;
+
+		getLogger().info("created");
 	}
 
 	@Override
@@ -42,8 +44,6 @@ public class Plugin extends JavaPlugin {
 		World.load();
 		Image.load();
 		Random.load();
-
-		saveConfig();
 
 		getLogger().info("loaded");
 	}

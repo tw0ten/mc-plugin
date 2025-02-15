@@ -17,54 +17,10 @@ import plugin.Plugin;
 import plugin.Text;
 
 public class Book {
-	public final String title, author, content;
-
-	public Book(final String title, final String author, final String content) {
-		this.title = title;
-		this.author = author;
-		this.content = content;
-	}
-
-	public Book(final String title, final String content) {
-		this(title, null, content);
-	}
-
-	public Book(final String content) {
-		this(null, null, content);
-	}
-
-	private ItemStack defaultItem() {
-		final var i = new ItemStack(Material.WRITTEN_BOOK);
-		final var b = (BookMeta) i.getItemMeta();
-		final var lore = new ArrayList<Component>();
-
-		b.setGeneration(Generation.TATTERED);
-
-		b.setAuthor(this.author);
-		if (this.title != null) {
-			for (var j = 0; !b.hasTitle(); j++)
-				b.setTitle(this.title.substring(0, this.title.length() - j));
-
-			if (!this.title.equals(b.getTitle())) {
-				lore.add(Text.lore("\"" + this.title + "\""));
-				b.setTitle(b.getTitle().substring(0, b.getTitle().length() - 1) + "-");
-			}
-		}
-
-		lore.add(Text.lore(String.valueOf(content.length())));
-
-		b.lore(lore);
-
-		i.setItemMeta(b);
-		return i;
-	}
-
-	class Page {
+	private class Page {
 		private interface max {
 			int chars = 1023, width = 131, lines = 13;
 		}
-
-		private final String content;
 
 		private static String chopWordBack(final String s) {
 			for (var j = s.length() - 1; j >= 0; j--)
@@ -73,19 +29,21 @@ public class Book {
 			return s;
 		}
 
-		public Page(String s) {
-			assert s.length() <= max.chars;
-			while (lines(s) > max.lines)
-				s = s.substring(0, s.length() - 1);
-			this.content = chopWordBack(s);
-		}
-
 		private static int lines(final String s) {
 			final String[] lines = s.split("\n");
 			var ls = lines.length;
 			for (final var l : lines)
 				ls += (l.length() * 8 - 1) / max.width;
 			return ls;
+		}
+
+		private final String content;
+
+		public Page(String s) {
+			assert s.length() <= max.chars;
+			while (lines(s) > max.lines)
+				s = s.substring(0, s.length() - 1);
+			this.content = chopWordBack(s);
 		}
 
 		@Override
@@ -100,6 +58,28 @@ public class Book {
 
 	private interface max {
 		int pages = 100;
+	}
+
+	public static Book exception(final Exception e) {
+		final var sw = new StringWriter();
+		e.printStackTrace(new PrintWriter(sw));
+		return new Book(e.getClass().getSimpleName(), sw.toString());
+	}
+
+	public final String title, author, content;
+
+	public Book(final String title, final String author, final String content) {
+		this.title = title;
+		this.author = author;
+		this.content = content;
+	}
+
+	public Book(final String title, final String content) {
+		this(title, null, content);
+	}
+
+	public Book(final String content) {
+		this(null, null, content);
 	}
 
 	public ItemStack[] toItems() {
@@ -176,9 +156,29 @@ public class Book {
 		return "\"" + this.title + "\" - " + this.author;
 	}
 
-	public static Book exception(final Exception e) {
-		final var sw = new StringWriter();
-		e.printStackTrace(new PrintWriter(sw));
-		return new Book(e.getClass().getSimpleName(), sw.toString());
+	private ItemStack defaultItem() {
+		final var i = new ItemStack(Material.WRITTEN_BOOK);
+		final var b = (BookMeta) i.getItemMeta();
+		final var lore = new ArrayList<Component>();
+
+		b.setGeneration(Generation.TATTERED);
+
+		b.setAuthor(this.author);
+		if (this.title != null) {
+			for (var j = 0; !b.hasTitle(); j++)
+				b.setTitle(this.title.substring(0, this.title.length() - j));
+
+			if (!this.title.equals(b.getTitle())) {
+				lore.add(Text.lore("\"" + this.title + "\""));
+				b.setTitle(b.getTitle().substring(0, b.getTitle().length() - 1) + "-");
+			}
+		}
+
+		lore.add(Text.lore(String.valueOf(content.length())));
+
+		b.lore(lore);
+
+		i.setItemMeta(b);
+		return i;
 	}
 }

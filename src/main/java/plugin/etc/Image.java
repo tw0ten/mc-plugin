@@ -28,6 +28,14 @@ public class Image {
 		int w = 128, h = 128;
 	}
 
+	public static class Screen {
+		public static Location l;
+		public static Player p;
+
+		public final static float scale = 1.5f;
+		public final static float interval = scale * 0.125f;
+	}
+
 	public static ItemStack[] map(final BufferedImage img) {
 		final var v = Bukkit.createMap(Bukkit.getWorlds().getFirst());
 		v.getRenderers().clear();
@@ -69,30 +77,6 @@ public class Image {
 			for (var y = 0; y < img.getHeight(); y++)
 				particle(tl.clone().add(r.clone().multiply(x)).add(0, d * y, 0),
 						Color.fromARGB(img.getRGB(x, y)), scale);
-	}
-
-	private static void particle(final Location l, final Color c, final float scale) {
-		final var i = new Particle.DustOptions(c, scale);
-		l.getWorld().spawnParticle(Particle.DUST, l, 0, i);
-	}
-
-	public static class Screen {
-		public static Location l;
-		public static Player p;
-
-		public final static float scale = 1.5f;
-		public final static float interval = scale * 0.125f;
-	}
-
-	private static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
-		final var tmp = img.getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
-		final var dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
-
-		final var g2d = dimg.createGraphics();
-		g2d.drawImage(tmp, 0, 0, null);
-		g2d.dispose();
-
-		return dimg;
 	}
 
 	public static void load() {
@@ -153,5 +137,21 @@ public class Image {
 				return List.of();
 			}
 		});
+	}
+
+	private static void particle(final Location l, final Color c, final float scale) {
+		final var i = new Particle.DustOptions(c, scale);
+		l.getWorld().spawnParticle(Particle.DUST, l, 0, i);
+	}
+
+	private static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
+		final var tmp = img.getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
+		final var dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+
+		final var g2d = dimg.createGraphics();
+		g2d.drawImage(tmp, 0, 0, null);
+		g2d.dispose();
+
+		return dimg;
 	}
 }

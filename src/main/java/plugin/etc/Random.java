@@ -46,6 +46,14 @@ public class Random {
 	public final static Material[] blocks = Arrays.stream(Material.values())
 			.filter(i -> i.isBlock()).toArray(Material[]::new);
 
+	public static final int itemInterval = (int) Plugin.tps() * 15;
+
+	private static final Material[] pottery = Arrays.stream(Item.s)
+			.filter(i -> i.name().endsWith("_POTTERY_SHERD")).toArray(Material[]::new);
+
+	private static final Material[] smithing = Arrays.stream(Item.s)
+			.filter(i -> i.name().endsWith("_SMITHING_TEMPLATE")).toArray(Material[]::new);
+
 	public static <T> T pick(final T[] a) {
 		if (a.length == 0)
 			return null;
@@ -94,27 +102,6 @@ public class Random {
 	public static Material block() {
 		return pick(blocks);
 	}
-
-	private static DyeColor dyeColor() {
-		return pick(DyeColor.values());
-	}
-
-	private static Pattern pattern() {
-		return new Pattern(dyeColor(),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).iterator()));
-	}
-
-	private static ArmorTrim trim() {
-		return new ArmorTrim(pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL).iterator()),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN).iterator()));
-	}
-
-	public static final int itemInterval = (int) Plugin.tps() * 15;
-
-	private static final Material[] pottery = Arrays.stream(Item.s)
-			.filter(i -> i.name().endsWith("_POTTERY_SHERD")).toArray(Material[]::new);
-	private static final Material[] smithing = Arrays.stream(Item.s)
-			.filter(i -> i.name().endsWith("_SMITHING_TEMPLATE")).toArray(Material[]::new);
 
 	public static ItemStack[] item() {
 		final var m = pick(Item.s);
@@ -244,7 +231,6 @@ public class Random {
 	public static ItemStack[] map() {
 		return Image.map(image(Image.mapDims.w, Image.mapDims.h));
 	}
-
 	public static Entity entity(final Location l) {
 		return l.getWorld().spawnEntity(l, pick(entities));
 	}
@@ -310,5 +296,19 @@ public class Random {
 				return List.of();
 			}
 		});
+	}
+
+	private static DyeColor dyeColor() {
+		return pick(DyeColor.values());
+	}
+
+	private static Pattern pattern() {
+		return new Pattern(dyeColor(),
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).iterator()));
+	}
+
+	private static ArmorTrim trim() {
+		return new ArmorTrim(pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL).iterator()),
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN).iterator()));
 	}
 }

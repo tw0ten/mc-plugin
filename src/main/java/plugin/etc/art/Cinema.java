@@ -27,20 +27,81 @@ import plugin.etc.Image;
 
 // extends world?
 public class Cinema {
+	private static class Subtitles {
+		private static class Subtitle {
+			private final String text;
+			public final int begins, ends;
+
+			public Subtitle(final String text, final int begins, final int ends) {
+				this.text = text;
+				this.begins = begins;
+				this.ends = ends;
+			}
+
+			@Override
+			public String toString() {
+				return text;
+			}
+		}
+
+		private static int HMSm2s(final String s) {
+			final var HMS_m = s.split(",");
+			final var HMS = HMS_m[0].split(":");
+			final var H = Integer.parseInt(HMS[0]) * 60 * 60;
+			final var M = Integer.parseInt(HMS[1]) * 60;
+			final var S = Integer.parseInt(HMS[2]);
+			final var m = Integer.parseInt(HMS_m[1]) / 1000;
+			return H + M + S + m;
+		}
+
+		private static Subtitles loadSRT(final Path p) throws Exception {
+			final var s = Files.readString(p).split("\n\n");
+			final var o = new Subtitle[s.length];
+			for (var i = 0; i < s.length; i++) {
+				final var j = s[i].split("\n");
+
+				final var time = j[1].split(" --> ");
+				final var begins = HMSm2s(time[0]);
+				final var ends = HMSm2s(time[1]);
+
+				final var text = String.join("\n", Arrays.copyOfRange(j, 2, j.length));
+
+				o[i] = new Subtitle(text, begins, ends);
+			}
+			return new Subtitles(o);
+		}
+
+		private final Subtitle[] subs;
+
+		private Subtitles(final Subtitle[] subs) {
+			this.subs = subs;
+		}
+
+		private String at(final int tick) {
+			for (var i = 0; i < subs.length; i++)
+				if (subs[i].begins * tpf * fps <= tick && subs[i].ends * tpf * fps >= tick)
+					return subs[i].toString();
+			return "";
+		}
+	}
+
+	private final static int fps = 5, tpf = (int) Plugin.tps() / fps;
 	private final org.bukkit.World w;
 	private final Block info;
 	private final Location tl, br;
+
 	private final Location subsL;
 	private final Location aLL, aRL;
-
 	private Path frames;
+
 	private Subtitles subtitles;
 	private Audio audio;
 
 	public boolean paused = false;
+
 	private String title;
 
-	private final static int fps = 5, tpf = (int) Audio.frequency / fps;
+	private final Entity e1, e2;
 
 	public Cinema() {
 		{
@@ -142,8 +203,6 @@ public class Cinema {
 		}
 	}
 
-	private final Entity e1, e2;
-
 	private void writeNametag(final String text) {
 		final var s1 = text.split("\n")[0];
 		final var s2 = s1.length() < text.length() ? text.split("\n")[1] : "";
@@ -154,13 +213,12 @@ public class Cinema {
 	private void tick() {
 		final var i = audio.i / 2;
 
-		if (i % tpf == 0) {
+		if (i % tpf == 0)
 			try {
 				final var image = ImageIO.read(frames.resolve((i / tpf) + ".png").toFile());
 				Image.particles(image, 1.2f, tl, br);
 			} catch (final Exception e) {
 			}
-		}
 
 		if (paused)
 			return;
@@ -175,63 +233,5 @@ public class Cinema {
 		}
 
 		writeNametag(subtitles.at(i));
-	}
-
-	private static class Subtitles {
-		private final Subtitle[] subs;
-
-		private static class Subtitle {
-			private final String text;
-			public final int begins, ends;
-
-			public Subtitle(final String text, final int begins, final int ends) {
-				this.text = text;
-				this.begins = begins;
-				this.ends = ends;
-			}
-
-			@Override
-			public String toString() {
-				return text;
-			}
-		}
-
-		private String at(final int tick) {
-			for (var i = 0; i < subs.length; i++)
-				if (subs[i].begins * Audio.frequency <= tick && subs[i].ends * Audio.frequency >= tick)
-					return subs[i].toString();
-			return "";
-		}
-
-		private Subtitles(final Subtitle[] subs) {
-			this.subs = subs;
-		}
-
-		private static int HMSm2s(final String s) {
-			final var HMS_m = s.split(",");
-			final var HMS = HMS_m[0].split(":");
-			final var H = Integer.parseInt(HMS[0]) * 60 * 60;
-			final var M = Integer.parseInt(HMS[1]) * 60;
-			final var S = Integer.parseInt(HMS[2]);
-			final var m = Integer.parseInt(HMS_m[1]) / 1000;
-			return H + M + S + m;
-		}
-
-		private static Subtitles loadSRT(final Path p) throws Exception {
-			final var s = Files.readString(p).split("\n\n");
-			final var o = new Subtitle[s.length];
-			for (var i = 0; i < s.length; i++) {
-				final var j = s[i].split("\n");
-
-				final var time = j[1].split(" --> ");
-				final var begins = HMSm2s(time[0]);
-				final var ends = HMSm2s(time[1]);
-
-				final var text = String.join("\n", Arrays.copyOfRange(j, 2, j.length));
-
-				o[i] = new Subtitle(text, begins, ends);
-			}
-			return new Subtitles(o);
-		}
 	}
 }

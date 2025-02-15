@@ -5,14 +5,11 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 
 public class Scoreboard {
-	private final org.bukkit.scoreboard.Scoreboard board;
-
-	private Objective create(final DisplaySlot ds) {
-		final var o = board.registerNewObjective(ds.name(), Criteria.DUMMY, Text.empty());
-		o.setDisplaySlot(ds);
-		o.setAutoUpdateDisplay(false);
-		return o;
+	private static void set(final Objective o, final String text) {
+		o.getScore(text).setScore(0);
 	}
+
+	private final org.bukkit.scoreboard.Scoreboard board;
 
 	public Scoreboard() {
 		this.board = Plugin.s().getScoreboardManager().getNewScoreboard();
@@ -35,7 +32,10 @@ public class Scoreboard {
 		}, 0, (long) Plugin.tps() * 5);
 	}
 
-	private static void set(final Objective o, final String text) {
-		o.getScore(text).setScore(0);
+	private Objective create(final DisplaySlot ds) {
+		final var o = board.registerNewObjective(ds.name(), Criteria.DUMMY, Text.empty());
+		o.setDisplaySlot(ds);
+		o.setAutoUpdateDisplay(false);
+		return o;
 	}
 }

@@ -17,6 +17,41 @@ import plugin.Plugin;
 import plugin.Text;
 
 public class Library {
+	public static Book[] books() {
+		final var books = new ArrayList<Book>();
+		final var library = path().toFile();
+		for (final var author : library.listFiles()) {
+			if (author.isFile()) {
+				books.add(loadBook(author.getName(), null));
+				continue;
+			}
+			for (final var title : author.listFiles())
+				books.add(loadBook(title.getName(), author.getName()));
+		}
+		return books.toArray(Book[]::new);
+	}
+
+	public static Book loadBook(final String title, final String author) {
+		final var library = path();
+		var p = library;
+		if (author != null)
+			p = p.resolve(author);
+		p = p.resolve(title);
+
+		if (!p.getParent().equals(library) && !p.getParent().getParent().equals(library))
+			return new Book("😐");
+
+		try {
+			return new Book(title, author, Files.readString(p));
+		} catch (final Exception e) {
+			return Book.exception(e);
+		}
+	}
+
+	private static Path path() {
+		return Plugin.i().getDataPath().resolve("library");
+	}
+
 	private final org.bukkit.World w;
 
 	public Library() {
@@ -92,41 +127,6 @@ public class Library {
 				return List.of();
 			}
 		});
-	}
-
-	private static Path path() {
-		return Plugin.i().getDataPath().resolve("library");
-	}
-
-	public static Book[] books() {
-		final var books = new ArrayList<Book>();
-		final var library = path().toFile();
-		for (final var author : library.listFiles()) {
-			if (author.isFile()) {
-				books.add(loadBook(author.getName(), null));
-				continue;
-			}
-			for (final var title : author.listFiles())
-				books.add(loadBook(title.getName(), author.getName()));
-		}
-		return books.toArray(Book[]::new);
-	}
-
-	public static Book loadBook(final String title, final String author) {
-		final var library = path();
-		var p = library;
-		if (author != null)
-			p = p.resolve(author);
-		p = p.resolve(title);
-
-		if (!p.getParent().equals(library) && !p.getParent().getParent().equals(library))
-			return new Book("😐");
-
-		try {
-			return new Book(title, author, Files.readString(p));
-		} catch (final Exception e) {
-			return Book.exception(e);
-		}
 	}
 
 }

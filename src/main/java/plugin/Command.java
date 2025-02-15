@@ -12,23 +12,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
 public abstract class Command {
-	public final String label;
-
-	// TODO: actual command constructors
-	public Command(final String label) {
-		this.label = label;
-	}
-
-	protected boolean perms(final CommandSender sender) {
-		return true;
-	}
-
-	protected abstract void run(CommandSender sender, String[] args);
-
-	protected List<String> complete(final CommandSender sender, final String[] args) {
-		return List.of();
-	}
-
 	public static abstract class Admin extends Command {
 		public Admin(final String label) {
 			super(label);
@@ -38,6 +21,8 @@ public abstract class Command {
 			return super.perms(sender) && sender.isOp();
 		}
 	}
+
+	private static List<Command> commands = new ArrayList<>();
 
 	public static void load() {
 		add(new Admin("reload") {
@@ -100,20 +85,6 @@ public abstract class Command {
 		commands.clear();
 	}
 
-	private static List<String> materials(final String arg) {
-		return complete(Arrays.stream(Material.values()).map(i -> {
-			return i.name();
-		}), arg.toUpperCase());
-	}
-
-	private static List<String> complete(final Stream<String> stream, final String arg) {
-		return stream.filter(i -> {
-			return i.startsWith(arg);
-		}).toList();
-	}
-
-	private static List<Command> commands = new ArrayList<>();
-
 	public static void register(final Command command) {
 		final var cmd = Plugin.i().getCommand(command.label);
 
@@ -144,5 +115,34 @@ public abstract class Command {
 
 	public static void add(final Command cmd) {
 		commands.add(cmd);
+	}
+
+	private static List<String> materials(final String arg) {
+		return complete(Arrays.stream(Material.values()).map(i -> {
+			return i.name();
+		}), arg.toUpperCase());
+	}
+
+	private static List<String> complete(final Stream<String> stream, final String arg) {
+		return stream.filter(i -> {
+			return i.startsWith(arg);
+		}).toList();
+	}
+
+	public final String label;
+
+	// TODO: actual command constructors
+	public Command(final String label) {
+		this.label = label;
+	}
+
+	protected boolean perms(final CommandSender sender) {
+		return true;
+	}
+
+	protected abstract void run(CommandSender sender, String[] args);
+
+	protected List<String> complete(final CommandSender sender, final String[] args) {
+		return List.of();
 	}
 }

@@ -10,6 +10,9 @@ import org.bukkit.OfflinePlayer;
 import net.kyori.adventure.text.format.TextColor;
 
 public class Player {
+	private static class Wrapper {
+	}
+
 	private static final Map<UUID, org.bukkit.entity.Player> s = new HashMap<>();
 
 	public static void join(final org.bukkit.entity.Player p) {
@@ -43,8 +46,5 @@ public class Player {
 
 	public static final OfflinePlayer[] offline() {
 		return Plugin.s().getOfflinePlayers();
-	}
-
-	private static class Wrapper {
 	}
 }
