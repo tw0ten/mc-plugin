@@ -25,14 +25,24 @@ public class Plugin extends JavaPlugin {
 		return instance.getServer();
 	}
 
+	public static void l(String... s) {
+		i().getLogger().info(String.join(" ", s));
+	}
+
 	public final FileConfiguration config = getConfig();
 
 	public final long uptime;
 
+	public final org.bukkit.World world, nether, end;
+
 	public Plugin() {
 		super();
-		this.uptime = System.currentTimeMillis();
 		instance = this;
+		this.uptime = System.currentTimeMillis();
+
+		this.world = s().getWorlds().get(0);
+		this.nether = s().getWorlds().get(1);
+		this.end = s().getWorlds().get(2);
 
 		getLogger().info("created");
 	}

@@ -2,6 +2,7 @@ package plugin;
 
 import static net.kyori.adventure.text.format.TextColor.color;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import org.bukkit.Location;
@@ -13,6 +14,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.Style;
@@ -37,10 +39,14 @@ public class Text {
 
 	public static Entity nametag(final Location l) {
 		final var e = l.getWorld().spawnEntity(l, EntityType.ARMOR_STAND);
+
 		e.setCustomNameVisible(true);
+		e.customName(empty());
+
 		e.setGravity(false);
 		e.setInvulnerable(true);
 		e.setInvisible(true);
+
 		return e;
 	}
 
@@ -59,18 +65,34 @@ public class Text {
 		return TextColor.lerp(v, color(0xff, 0x00, 0x00), color(0x00, 0xff, 0x00));
 	}
 
+	public static String date(Date d) {
+		final var sep = '/';
+		final var i = Calendar.getInstance();
+		i.setTime(d);
+		final var day = i.get(Calendar.DAY_OF_MONTH);
+		final var month = 1 + i.get(Calendar.MONTH);
+		final var year = i.get(Calendar.YEAR);
+		return padStart('0', 2, String.valueOf(day))
+				+ sep + padStart('0', 2, String.valueOf(month))
+				+ sep + year;
+	}
+
+	public static String padStart(char c, int l, String s) {
+		return String.valueOf(c).repeat(l - s.length()) + s;
+	}
+
 	public static Component player(final Player p) {
 		final var uuid = p.getUniqueId().toString();
 		return p.displayName()
 				.clickEvent(ClickEvent.copyToClipboard(uuid))
 				.hoverEvent(HoverEvent.showText(Text.empty()
 						.append(p.displayName())
+						.append(((TextComponent) p.displayName()).content().equals(p.getName())
+								? empty()
+								: plain(" (" + p.getName() + ")"))
 						.appendNewline()
-						.append(plain(p.getName() + " " + uuid))
+						.append(plain(uuid))
 						.appendNewline()
-						.append(plain(new Date(plugin.Player.offline(p.getUniqueId()).getFirstPlayed()).toInstant()
-								.toString()))
-						.appendNewline()
-						.append(Text.plain(p.isOp() ? "op" : ""))));
+						.append(plain(date(new Date(plugin.Player.offline(p.getUniqueId()).getFirstPlayed()))))));
 	}
 }

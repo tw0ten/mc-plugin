@@ -123,7 +123,7 @@ public abstract class Command {
 		}), arg.toUpperCase());
 	}
 
-	private static List<String> complete(final Stream<String> stream, final String arg) {
+	public static List<String> complete(final Stream<String> stream, final String arg) {
 		return stream.filter(i -> {
 			return i.startsWith(arg);
 		}).toList();

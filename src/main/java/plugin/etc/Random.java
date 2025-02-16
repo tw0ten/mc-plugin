@@ -9,8 +9,12 @@ import java.util.stream.Stream;
 import org.bukkit.Chunk;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
+import org.bukkit.FireworkEffect;
+import org.bukkit.Keyed;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -20,6 +24,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.ShieldMeta;
@@ -36,76 +41,109 @@ import io.papermc.paper.registry.RegistryKey;
 import plugin.Command;
 import plugin.Item;
 import plugin.Plugin;
+import plugin.World;
 import plugin.etc.art.Library;
 
 public class Random {
-	private static final java.util.Random r = new java.util.Random();
+	public static final Random i = new Random(new java.util.Random());
 
-	public final static EntityType[] entities = EntityType.values();
+	public Random(java.util.Random r) {
+		this.r = r;
+	}
 
-	public final static Material[] blocks = Arrays.stream(Material.values())
+	private final java.util.Random r;
+
+	public final EntityType[] entities = EntityType.values();
+
+	public final Material[] blocks = Arrays.stream(Material.values())
 			.filter(i -> i.isBlock()).toArray(Material[]::new);
 
-	public static final int itemInterval = (int) Plugin.tps() * 15;
-
-	private static final Material[] pottery = Arrays.stream(Item.s)
+	private final Material[] pottery = Arrays.stream(Item.s)
 			.filter(i -> i.name().endsWith("_POTTERY_SHERD")).toArray(Material[]::new);
 
-	private static final Material[] smithing = Arrays.stream(Item.s)
+	private final Material[] smithing = Arrays.stream(Item.s)
 			.filter(i -> i.name().endsWith("_SMITHING_TEMPLATE")).toArray(Material[]::new);
 
-	public static <T> T pick(final T[] a) {
+	public <T> T pick(final T[] a) {
 		if (a.length == 0)
 			return null;
 		return a[exc(a.length)];
 	}
 
-	public static <T> T pick(final List<T> a) {
+	public <T> T pick(final List<T> a) {
 		if (a.isEmpty())
 			return null;
 		return a.get(exc(a.size()));
 	}
 
-	public static <T> T pick(final Iterator<T> a) {
+	public <T> T pick(final Iterator<T> a) {
 		return pick(Lists.newArrayList(a));
 	}
 
-	public static <T> T pick(final Stream<T> a) {
+	public <T> T pick(final Stream<T> a) {
 		return pick(a.iterator());
 	}
 
-	public static int inc(final int bound) {
+	public <T extends Keyed> T pick(final Registry<T> a) {
+		return pick(a.iterator());
+	}
+
+	public boolean coin() {
+		return oneIn(2);
+	}
+
+	public boolean oneIn(int c) {
+		return inc(0, c) == 0;
+	}
+
+	public boolean chance(float f) {
+		return r.nextFloat(1) < f;
+	}
+
+	public int inc(final int bound) {
 		return exc(bound + 1);
 	}
 
-	public static int inc(final int start, final int bound) {
+	public int inc(final int start, final int bound) {
 		return exc(start, bound + 1);
 	}
 
-	public static int exc(final int bound) {
+	public int exc(final int bound) {
 		return exc(0, bound);
 	}
 
-	public static int exc(final int start, final int bound) {
+	public int exc(final int start, final int bound) {
 		return r.nextInt(start, bound);
 	}
 
-	public static Color color() {
+	public Color color() {
 		return Color.fromRGB(inc(0xFF), inc(0xFF), inc(0xFF));
 	}
 
-	public static Book book() {
+	public Book book() {
 		final var b = pick(Library.books());
 		return Library.loadBook(b.title, b.author);
 	}
 
-	public static Material block() {
+	public Material block() {
 		return pick(blocks);
 	}
 
-	public static ItemStack[] item() {
-		final var m = pick(Item.s);
+	public ItemStack[] item() {
+		return item(pick(Item.s));
+	}
 
+	public FireworkEffect firework() {
+		return FireworkEffect.builder()
+				.with(pick(FireworkEffect.Type.values()))
+				.trail(coin())
+				.flicker(coin())
+				.withColor(color())
+				.withFade(color(), color())
+				.build();
+	}
+
+	public ItemStack[] item(final Material m) {
 		if (Arrays.stream(pottery).anyMatch(m::equals)) {
 			if (m == pottery[0])
 				return Item.s(Item.i(pick(pottery)));
@@ -118,13 +156,21 @@ public class Random {
 		}
 
 		switch (m) {
-			case KNOWLEDGE_BOOK:
 			case WRITTEN_BOOK:
 				return book().toItems();
 
+			case FIREWORK_ROCKET:
+				return Item.s(Item.m(Item.i(m), e -> {
+					final var l = exc(10);
+					((FireworkMeta) e).setPower(inc(255));
+					for (var i = 0; i < l; i++)
+						((FireworkMeta) e).addEffect(firework());
+					return e;
+				}));
+
 			case ENCHANTED_BOOK:
 				return Item.s(Item.m(Item.i(m), e -> {
-					final var c = pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).iterator());
+					final var c = pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT));
 					((EnchantmentStorageMeta) e).addStoredEnchant(c, inc(c.getStartLevel(), c.getMaxLevel()), false);
 					return e;
 				}));
@@ -225,17 +271,17 @@ public class Random {
 			default:
 		}
 		return Item.s(Item.i(m));
-
 	}
 
-	public static ItemStack[] map() {
+	public ItemStack[] map() {
 		return Image.map(image(Image.mapDims.w, Image.mapDims.h));
 	}
-	public static Entity entity(final Location l) {
+
+	public Entity entity(final Location l) {
 		return l.getWorld().spawnEntity(l, pick(entities));
 	}
 
-	public static BufferedImage image(final int w, final int h) {
+	public BufferedImage image(final int w, final int h) {
 		final var img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
 		for (var x = 0; x < img.getWidth(); x++)
 			for (var y = 0; y < img.getHeight(); y++)
@@ -243,7 +289,7 @@ public class Random {
 		return img;
 	}
 
-	public static void chunk(final Chunk c) {
+	public void chunk(final Chunk c) {
 		final var y0 = c.getWorld().getMaxHeight();
 		final var x0 = 16;
 		final var z0 = 16;
@@ -260,6 +306,8 @@ public class Random {
 		}
 	}
 
+	public static org.bukkit.World w;
+
 	public static void load() {
 		Command.add(new Command.Admin("random") {
 			@Override
@@ -269,16 +317,20 @@ public class Random {
 						return;
 					switch (args[0]) {
 						case "book":
-							Item.n(p, Random.book().toItems());
+							Item.n(p, i.book().toItems());
 							return;
 						case "item":
-							Item.n(p, Random.item());
+							if (args.length < 2) {
+								Item.n(p, i.item());
+								return;
+							}
+							Item.n(p, i.item(Material.valueOf(args[1])));
 							return;
 						case "entity":
-							Random.entity(p.getLocation());
+							i.entity(p.getLocation());
 							return;
 						case "map":
-							Item.n(p, Random.map());
+							Item.n(p, i.map());
 							return;
 						default:
 					}
@@ -291,24 +343,31 @@ public class Random {
 				switch (args.length) {
 					case 1:
 						return List.of("book", "item", "entity", "map");
+					case 2:
+						if (args[0].equals("item"))
+							return Command.complete(Arrays.stream(Item.s).map(i -> {
+								return i.name();
+							}), args[1].toUpperCase());
 					default:
 				}
 				return List.of();
 			}
 		});
+
+		Random.w = World.randomWorld(new NamespacedKey(Plugin.i(), "random"));
 	}
 
-	private static DyeColor dyeColor() {
+	private DyeColor dyeColor() {
 		return pick(DyeColor.values());
 	}
 
-	private static Pattern pattern() {
+	private Pattern pattern() {
 		return new Pattern(dyeColor(),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).iterator()));
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN)));
 	}
 
-	private static ArmorTrim trim() {
-		return new ArmorTrim(pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL).iterator()),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN).iterator()));
+	private ArmorTrim trim() {
+		return new ArmorTrim(pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL)),
+				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN)));
 	}
 }

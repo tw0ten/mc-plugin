@@ -22,11 +22,12 @@ public class Book {
 			int chars = 1023, width = 131, lines = 13;
 		}
 
-		private static String chopWordBack(final String s) {
-			for (var j = s.length() - 1; j >= 0; j--)
+		private static String chopWord(final String s) {
+			var j = s.length();
+			for (j--; j > 0; j--)
 				if (Character.isWhitespace(s.charAt(j)))
-					return s.substring(0, j + 1);
-			return s;
+					break;
+			return s.substring(0, j);
 		}
 
 		private static int lines(final String s) {
@@ -42,8 +43,8 @@ public class Book {
 		public Page(String s) {
 			assert s.length() <= max.chars;
 			while (lines(s) > max.lines)
-				s = s.substring(0, s.length() - 1);
-			this.content = chopWordBack(s);
+				s = chopWord(s);
+			this.content = s;
 		}
 
 		@Override
@@ -131,7 +132,8 @@ public class Book {
 		for (var i = -1; (i = this.content.indexOf(s, i)) != -1; o += "\n", i++) {
 			o += i + ": ";
 			var c = 0;
-			int book = -1, page = -1;
+			var book = -1;
+			var page = -1;
 			for (book = 0; book < items.length; book++) {
 				if (c >= i)
 					break;
@@ -167,7 +169,6 @@ public class Book {
 		if (this.title != null) {
 			for (var j = 0; !b.hasTitle(); j++)
 				b.setTitle(this.title.substring(0, this.title.length() - j));
-
 			if (!this.title.equals(b.getTitle())) {
 				lore.add(Text.lore("\"" + this.title + "\""));
 				b.setTitle(b.getTitle().substring(0, b.getTitle().length() - 1) + "-");
@@ -175,7 +176,6 @@ public class Book {
 		}
 
 		lore.add(Text.lore(String.valueOf(content.length())));
-
 		b.lore(lore);
 
 		i.setItemMeta(b);

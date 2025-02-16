@@ -15,10 +15,13 @@ public class Scoreboard {
 		this.board = Plugin.s().getScoreboardManager().getNewScoreboard();
 		if (true)
 			return;
+
 		final var sidebar = create(DisplaySlot.SIDEBAR);
 		sidebar.displayName(Text.plain("sidebar"));
+
 		final var tab = create(DisplaySlot.PLAYER_LIST);
 		tab.displayName(Text.plain("tab"));
+
 		final var name = create(DisplaySlot.BELOW_NAME);
 		name.displayName(Text.plain("name"));
 
