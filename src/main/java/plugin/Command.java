@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
 import org.bukkit.command.CommandExecutor;
+import org.bukkit.entity.Player;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
@@ -41,14 +42,8 @@ public abstract class Command {
 		add(new Command("disconnect") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
-				if (sender instanceof final org.bukkit.entity.Player p)
+				if (sender instanceof final Player p)
 					p.kick(Text.plain("/" + this.label));
-			}
-		});
-		add(new Command("echo") {
-			@Override
-			protected void run(final CommandSender sender, final String[] args) {
-				sender.sendMessage(String.join(" ", args));
 			}
 		});
 		add(new Command("statistics") {
@@ -58,7 +53,7 @@ public abstract class Command {
 					return;
 				final var s = Statistic.valueOf(args[0]);
 				sender.sendMessage(s.name());
-				for (final var p : Player.offline())
+				for (final var p : plugin.Player.offline())
 					sender.sendMessage(p.getName() + ": " +
 							(args.length > 1 ? p.getStatistic(s, Material.valueOf(args[1])) : p.getStatistic(s)));
 			}
@@ -117,16 +112,16 @@ public abstract class Command {
 		commands.add(cmd);
 	}
 
-	private static List<String> materials(final String arg) {
-		return complete(Arrays.stream(Material.values()).map(i -> {
-			return i.name();
-		}), arg.toUpperCase());
-	}
-
 	public static List<String> complete(final Stream<String> stream, final String arg) {
 		return stream.filter(i -> {
 			return i.startsWith(arg);
 		}).toList();
+	}
+
+	private static List<String> materials(final String arg) {
+		return complete(Arrays.stream(Material.values()).map(i -> {
+			return i.name();
+		}), arg.toUpperCase());
 	}
 
 	public final String label;

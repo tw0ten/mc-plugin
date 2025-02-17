@@ -65,7 +65,7 @@ public class Text {
 		return TextColor.lerp(v, color(0xff, 0x00, 0x00), color(0x00, 0xff, 0x00));
 	}
 
-	public static String date(Date d) {
+	public static String date(final Date d) {
 		final var sep = '/';
 		final var i = Calendar.getInstance();
 		i.setTime(d);
@@ -77,7 +77,7 @@ public class Text {
 				+ sep + year;
 	}
 
-	public static String padStart(char c, int l, String s) {
+	public static String padStart(final char c, final int l, final String s) {
 		return String.valueOf(c).repeat(l - s.length()) + s;
 	}
 

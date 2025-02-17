@@ -33,16 +33,12 @@ public class Plugin extends JavaPlugin {
 
 	public final long uptime;
 
-	public final org.bukkit.World world, nether, end;
+	public org.bukkit.World world, nether, end;
 
 	public Plugin() {
 		super();
 		instance = this;
 		this.uptime = System.currentTimeMillis();
-
-		this.world = s().getWorlds().get(0);
-		this.nether = s().getWorlds().get(1);
-		this.end = s().getWorlds().get(2);
 
 		getLogger().info("created");
 	}
@@ -51,16 +47,21 @@ public class Plugin extends JavaPlugin {
 	public void onLoad() {
 		super.onLoad();
 
-		World.load();
-		Image.load();
-		Random.load();
-
 		getLogger().info("loaded");
 	}
 
 	@Override
 	public void onEnable() {
 		super.onEnable();
+
+		Image.load();
+
+		this.world = s().getWorlds().get(0);
+		this.nether = s().getWorlds().get(1);
+		this.end = s().getWorlds().get(2);
+
+		World.load();
+		Random.load();
 
 		for (final var p : s().getOnlinePlayers())
 			Player.join(p);

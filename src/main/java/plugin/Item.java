@@ -10,7 +10,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class Item {
 	public static final Material[] s = Arrays.stream(Material.values())
-			.filter(i -> i.isItem()).toArray(Material[]::new);
+			.filter(i -> i.isItem())
+			.toArray(Material[]::new);
 
 	public static ItemStack i(final Material m) {
 		return new ItemStack(m);

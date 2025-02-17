@@ -13,6 +13,7 @@ import org.bukkit.inventory.meta.BookMeta.Generation;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import plugin.Item;
 import plugin.Plugin;
 import plugin.Text;
 
@@ -159,7 +160,7 @@ public class Book {
 	}
 
 	private ItemStack defaultItem() {
-		final var i = new ItemStack(Material.WRITTEN_BOOK);
+		final var i = Item.i(Material.WRITTEN_BOOK);
 		final var b = (BookMeta) i.getItemMeta();
 		final var lore = new ArrayList<Component>();
 

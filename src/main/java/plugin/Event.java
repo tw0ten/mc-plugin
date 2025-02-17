@@ -3,12 +3,8 @@ package plugin;
 import java.util.Date;
 
 import org.bukkit.GameMode;
-import org.bukkit.PortalType;
-import org.bukkit.Statistic;
-import org.bukkit.World.Environment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
@@ -32,24 +28,24 @@ public class Event implements Listener {
 
 	private void tick(final int tick) {
 		for (final var p : Player.s())
-			if ((p.getTicksLived() + 1) % (int) (Plugin.tps() * 15) == 0)
+			if ((p.getTicksLived() + 1) % (int) (Plugin.tps() * 20) == 0)
 				if (!p.isDead() && p.getGameMode() == GameMode.SURVIVAL)
 					Item.n(p, Random.i.item());
 	}
 
 	@EventHandler
 	private void serverPing(final ServerListPingEvent e) {
-		final var server = Plugin.s();
+		final var s = Plugin.s();
 		final var player = Player.offline(Player.uuid(
 				Plugin.i().config.getString("ipcache." + e.getAddress().getHostAddress())));
-		final var tps = (float) server.getTPS()[1] / Plugin.tps();
+		final var tps = (float) s.getTPS()[1] / Plugin.tps();
 
 		e.setMaxPlayers(e.getNumPlayers() + 1);
 		e.motd(Text.empty().color(TextColor.color(0xaa, 0xaa, 0xaa))
 
-				.append(Text.plain(server.getName()))
+				.append(Text.plain(s.getName()))
 				.appendSpace()
-				.append(Text.plain(server.getMinecraftVersion()).color(TextColor.color(0xff, 0xff, 0xff)))
+				.append(Text.plain(s.getMinecraftVersion()).color(TextColor.color(0xff, 0xff, 0xff)))
 				.appendSpace()
 				.append(Text.plain(String.valueOf(Math.round(tps * 100) / 100f)).color(Text.qualityGradient(tps)))
 				.appendSpace()
@@ -92,12 +88,12 @@ public class Event implements Listener {
 	}
 
 	@EventHandler
-	private void despawn(final ItemDespawnEvent e) {
+	private void itemDespawn(final ItemDespawnEvent e) {
 		e.getEntity().setGlowing(true);
 	}
 
 	@EventHandler
-	private void portal(final PlayerPortalEvent e) {
+	private void playerPortal(final PlayerPortalEvent e) {
 		final var to = e.getTo();
 		if (e.getFrom().getWorld() == Plugin.i().world)
 			to.setWorld(Random.w);

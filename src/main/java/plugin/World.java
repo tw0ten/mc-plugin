@@ -9,6 +9,7 @@ import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Biome;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.generator.BiomeProvider;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.generator.WorldInfo;
@@ -22,13 +23,17 @@ public class World {
 	private static final List<Biome> biomes = RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME).stream()
 			.toList();
 
-	private static final Environment[] envs = { Environment.NORMAL, Environment.NETHER, Environment.THE_END };
+	private static final Environment[] environments = {
+			Environment.NORMAL,
+			Environment.NETHER,
+			Environment.THE_END
+	};
 
 	public static void load() {
 		Command.add(new Command.Admin("world") {
 			@Override
 			protected void run(final CommandSender sender, final String[] args) {
-				if (sender instanceof final org.bukkit.entity.Player p)
+				if (sender instanceof final Player p)
 					p.teleport(Plugin.s().getWorld(args[0]).getSpawnLocation());
 			}
 		});
@@ -82,7 +87,6 @@ public class World {
 		});
 
 		final var w = wc.createWorld();
-		w.setAutoSave(false);
 
 		return w;
 	}
@@ -90,7 +94,7 @@ public class World {
 	public static org.bukkit.World randomWorld(final NamespacedKey key) {
 		final var wc = new WorldCreator(key);
 		wc.keepSpawnLoaded(TriState.FALSE);
-		wc.environment(Random.i.pick(envs));
+		wc.environment(Environment.NETHER);
 
 		final var r = new Random(new java.util.Random(wc.seed()));
 
@@ -112,10 +116,14 @@ public class World {
 					final int chunkZ, final ChunkData chunkData) {
 				for (var x = 0; x < 16; x++)
 					for (var z = 0; z < 16; z++)
-						for (var y = worldInfo.getMinHeight(); y < worldInfo.getMaxHeight(); y++)
-							if (!r.oneIn(density) || r.chance((y - worldInfo.getMinHeight())
-									/ (float) (worldInfo.getMaxHeight() - worldInfo.getMinHeight())))
+						for (var y = worldInfo.getMinHeight(); y < worldInfo.getMaxHeight(); y++) {
+							final var m = chunkData.getType(x, y, z);
+							if (m == Material.NETHER_PORTAL || m == Material.END_PORTAL || m == Material.END_GATEWAY
+									|| !r.oneIn(density)
+									|| r.chance((y - worldInfo.getMinHeight())
+											/ (float) (worldInfo.getMaxHeight() - worldInfo.getMinHeight())))
 								chunkData.setBlock(x, y, z, Material.AIR);
+						}
 			}
 
 			@Override
@@ -126,8 +134,7 @@ public class World {
 		});
 		wc.biomeProvider(new BiomeProvider() {
 			@Override
-			public Biome getBiome(final WorldInfo worldInfo, final int arg1, final int arg2,
-					final int arg3) {
+			public Biome getBiome(final WorldInfo worldInfo, final int x, final int y, final int z) {
 				return r.pick(getBiomes(worldInfo));
 			}
 
@@ -142,10 +149,11 @@ public class World {
 		return w;
 	}
 
-	public static void idle(final org.bukkit.World world) {
-		world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-		world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
-		world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
-		world.setPVP(false);
+	public static void idle(final org.bukkit.World w) {
+		w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+		w.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+		w.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+		w.setPVP(false);
+		w.setAutoSave(false);
 	}
 }

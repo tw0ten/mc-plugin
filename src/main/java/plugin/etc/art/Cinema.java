@@ -86,6 +86,7 @@ public class Cinema {
 	}
 
 	private final static int fps = 5, tpf = (int) Plugin.tps() / fps;
+
 	private final org.bukkit.World w;
 	private final Block info;
 	private final Location tl, br;
@@ -133,9 +134,10 @@ public class Cinema {
 				switch (args[0]) {
 					case "seek":
 						if (args.length < 2) {
-							sender.sendMessage(
-									"\"" + title + "\"" + (paused ? " paused" : "") + " " +
-											audio.i + "/" + audio.waves.length);
+							sender.sendMessage("\"" + title + "\""
+									+ (paused ? " paused" : "")
+									+ " " +
+									audio.i + "/" + audio.waves.length);
 							return;
 						}
 						audio.i = Integer.parseInt(args[1]);

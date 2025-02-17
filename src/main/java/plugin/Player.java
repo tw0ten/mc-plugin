@@ -10,20 +10,17 @@ import org.bukkit.OfflinePlayer;
 import net.kyori.adventure.text.format.TextColor;
 
 public class Player {
-	private static class Wrapper {
-	}
-
 	private static final Map<UUID, org.bukkit.entity.Player> s = new HashMap<>();
 
 	public static void join(final org.bukkit.entity.Player p) {
-		Player.s.put(p.getUniqueId(), p);
+		s.put(p.getUniqueId(), p);
 		p.displayName(Text.plain(p.getName()));
 		if (p.isOp())
 			p.displayName(p.displayName().color(TextColor.color(0x40e0d0)));
 	}
 
 	public static void quit(final org.bukkit.entity.Player p) {
-		Player.s.remove(p.getUniqueId());
+		s.remove(p.getUniqueId());
 	}
 
 	public static final Collection<org.bukkit.entity.Player> s() {

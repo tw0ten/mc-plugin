@@ -12,7 +12,8 @@ public class Scoreboard {
 	private final org.bukkit.scoreboard.Scoreboard board;
 
 	public Scoreboard() {
-		this.board = Plugin.s().getScoreboardManager().getNewScoreboard();
+		this.board = Plugin.s().getScoreboardManager().getMainScoreboard();
+
 		if (true)
 			return;
 

@@ -30,6 +30,7 @@ public class Audio {
 	}
 
 	public static final float frequency = plugin.Plugin.tps();
+
 	public static Audio load(final File f) throws Exception {
 		final var dispatcher = AudioDispatcherFactory.fromFile(f, 1024, 0);
 		dispatcher.setZeroPadLastBuffer(true);
@@ -49,7 +50,9 @@ public class Audio {
 
 		return new Audio(waves.toArray(Wave[]::new));
 	}
+
 	private final Sound sound = Sound.BLOCK_NOTE_BLOCK_HARP;
+
 	public float volume = 1f;
 
 	public int i = 0;

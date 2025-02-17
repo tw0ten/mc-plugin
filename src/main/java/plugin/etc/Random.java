@@ -16,7 +16,9 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.block.banner.Pattern;
+import org.bukkit.block.banner.PatternType;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -31,6 +33,8 @@ import org.bukkit.inventory.meta.ShieldMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.inventory.meta.SuspiciousStewMeta;
 import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.potion.PotionType;
 
 import com.google.common.collect.Lists;
@@ -47,22 +51,88 @@ import plugin.etc.art.Library;
 public class Random {
 	public static final Random i = new Random(new java.util.Random());
 
-	public Random(java.util.Random r) {
-		this.r = r;
+	public static org.bukkit.World w;
+
+	public static final EntityType[] entities = EntityType.values();
+
+	public static final Material[] blocks = Arrays.stream(Material.values())
+			.filter(i -> i.isBlock()).toArray(Material[]::new);
+
+	private static final Material[] pottery = Arrays.stream(Item.s)
+			.filter(i -> i.name().endsWith("_POTTERY_SHERD")).toArray(Material[]::new);
+
+	private static final Material[] smithing = Arrays.stream(Item.s)
+			.filter(i -> i.name().endsWith("_SMITHING_TEMPLATE")).toArray(Material[]::new);
+
+	private final static PatternType[] banners = RegistryAccess.registryAccess()
+			.getRegistry(RegistryKey.BANNER_PATTERN).stream().toArray(PatternType[]::new);
+
+	private final static TrimMaterial[] trimMaterials = RegistryAccess.registryAccess()
+			.getRegistry(RegistryKey.TRIM_MATERIAL).stream().toArray(TrimMaterial[]::new);
+
+	private final static TrimPattern[] trimPatterns = RegistryAccess.registryAccess()
+			.getRegistry(RegistryKey.TRIM_PATTERN).stream().toArray(TrimPattern[]::new);
+
+	private final static Enchantment[] enchantments = RegistryAccess.registryAccess()
+			.getRegistry(RegistryKey.ENCHANTMENT).stream().toArray(Enchantment[]::new);
+
+	public static void load() {
+		Command.add(new Command.Admin("random") {
+			@Override
+			protected void run(final CommandSender sender, final String[] args) {
+				if (sender instanceof final Player p) {
+					if (args.length < 1)
+						return;
+					switch (args[0]) {
+						case "book":
+							Item.n(p, i.book().toItems());
+							return;
+						case "item":
+							if (args.length < 2) {
+								Item.n(p, i.item());
+								return;
+							}
+							Item.n(p, i.item(Material.valueOf(args[1])));
+							return;
+						case "entity":
+							i.entity(p.getLocation());
+							return;
+						case "map":
+							Item.n(p, i.map());
+							return;
+						default:
+					}
+					return;
+				}
+			}
+
+			@Override
+			protected List<String> complete(final CommandSender sender, final String[] args) {
+				switch (args.length) {
+					case 1:
+						return List.of("book", "item", "entity", "map");
+					case 2:
+						if (args[0].equals("item"))
+							return Command.complete(Arrays.stream(Item.s).map(i -> {
+								return i.name();
+							}), args[1].toUpperCase());
+					default:
+				}
+				return List.of();
+			}
+		});
+
+		final var key = new NamespacedKey(Plugin.i(), "random");
+		Random.w = Plugin.s().getWorld(key);
+		if (Random.w == null)
+			Random.w = World.randomWorld(key);
 	}
 
 	private final java.util.Random r;
 
-	public final EntityType[] entities = EntityType.values();
-
-	public final Material[] blocks = Arrays.stream(Material.values())
-			.filter(i -> i.isBlock()).toArray(Material[]::new);
-
-	private final Material[] pottery = Arrays.stream(Item.s)
-			.filter(i -> i.name().endsWith("_POTTERY_SHERD")).toArray(Material[]::new);
-
-	private final Material[] smithing = Arrays.stream(Item.s)
-			.filter(i -> i.name().endsWith("_SMITHING_TEMPLATE")).toArray(Material[]::new);
+	public Random(final java.util.Random r) {
+		this.r = r;
+	}
 
 	public <T> T pick(final T[] a) {
 		if (a.length == 0)
@@ -89,14 +159,14 @@ public class Random {
 	}
 
 	public boolean coin() {
-		return oneIn(2);
+		return r.nextBoolean();
 	}
 
-	public boolean oneIn(int c) {
+	public boolean oneIn(final int c) {
 		return inc(0, c) == 0;
 	}
 
-	public boolean chance(float f) {
+	public boolean chance(final float f) {
 		return r.nextFloat(1) < f;
 	}
 
@@ -161,8 +231,8 @@ public class Random {
 
 			case FIREWORK_ROCKET:
 				return Item.s(Item.m(Item.i(m), e -> {
-					final var l = exc(10);
 					((FireworkMeta) e).setPower(inc(255));
+					final var l = exc(10);
 					for (var i = 0; i < l; i++)
 						((FireworkMeta) e).addEffect(firework());
 					return e;
@@ -170,7 +240,7 @@ public class Random {
 
 			case ENCHANTED_BOOK:
 				return Item.s(Item.m(Item.i(m), e -> {
-					final var c = pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT));
+					final var c = pick(enchantments);
 					((EnchantmentStorageMeta) e).addStoredEnchant(c, inc(c.getStartLevel(), c.getMaxLevel()), false);
 					return e;
 				}));
@@ -185,6 +255,7 @@ public class Random {
 					return e;
 				}));
 
+			case TURTLE_HELMET:
 			case CHAINMAIL_HELMET:
 			case CHAINMAIL_CHESTPLATE:
 			case CHAINMAIL_LEGGINGS:
@@ -306,68 +377,17 @@ public class Random {
 		}
 	}
 
-	public static org.bukkit.World w;
-
-	public static void load() {
-		Command.add(new Command.Admin("random") {
-			@Override
-			protected void run(final CommandSender sender, final String[] args) {
-				if (sender instanceof final Player p) {
-					if (args.length < 1)
-						return;
-					switch (args[0]) {
-						case "book":
-							Item.n(p, i.book().toItems());
-							return;
-						case "item":
-							if (args.length < 2) {
-								Item.n(p, i.item());
-								return;
-							}
-							Item.n(p, i.item(Material.valueOf(args[1])));
-							return;
-						case "entity":
-							i.entity(p.getLocation());
-							return;
-						case "map":
-							Item.n(p, i.map());
-							return;
-						default:
-					}
-					return;
-				}
-			}
-
-			@Override
-			protected List<String> complete(final CommandSender sender, final String[] args) {
-				switch (args.length) {
-					case 1:
-						return List.of("book", "item", "entity", "map");
-					case 2:
-						if (args[0].equals("item"))
-							return Command.complete(Arrays.stream(Item.s).map(i -> {
-								return i.name();
-							}), args[1].toUpperCase());
-					default:
-				}
-				return List.of();
-			}
-		});
-
-		Random.w = World.randomWorld(new NamespacedKey(Plugin.i(), "random"));
-	}
-
 	private DyeColor dyeColor() {
 		return pick(DyeColor.values());
 	}
 
 	private Pattern pattern() {
-		return new Pattern(dyeColor(),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN)));
+		return new Pattern(dyeColor(), pick(banners));
 	}
 
 	private ArmorTrim trim() {
-		return new ArmorTrim(pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL)),
-				pick(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN)));
+		if (oneIn(trimMaterials.length * trimPatterns.length + 1))
+			return null;
+		return new ArmorTrim(pick(trimMaterials), pick(trimPatterns));
 	}
 }

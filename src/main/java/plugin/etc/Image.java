@@ -6,7 +6,6 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -22,6 +21,7 @@ import org.bukkit.util.Vector;
 
 import plugin.Command;
 import plugin.Item;
+import plugin.Plugin;
 
 public class Image {
 	public interface mapDims {
@@ -37,9 +37,11 @@ public class Image {
 	}
 
 	public static ItemStack[] map(final BufferedImage img) {
-		final var v = Bukkit.createMap(Bukkit.getWorlds().getFirst());
+		final var v = Plugin.s().createMap(Plugin.i().world);
 		v.getRenderers().clear();
 		v.setScale(MapView.Scale.CLOSEST);
+		v.setTrackingPosition(false);
+		v.setLocked(true);
 		v.addRenderer(new MapRenderer() {
 			@Override
 			public void render(final MapView v, final MapCanvas c, final Player p) {
@@ -139,19 +141,19 @@ public class Image {
 		});
 	}
 
-	private static void particle(final Location l, final Color c, final float scale) {
+	public static void particle(final Location l, final Color c, final float scale) {
 		final var i = new Particle.DustOptions(c, scale);
 		l.getWorld().spawnParticle(Particle.DUST, l, 0, i);
 	}
 
-	private static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
-		final var tmp = img.getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
-		final var dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+	public static BufferedImage resize(final BufferedImage img, final int w, final int h) {
+		final var tmp = img.getScaledInstance(w, h, java.awt.Image.SCALE_SMOOTH);
+		final var o = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
-		final var g2d = dimg.createGraphics();
-		g2d.drawImage(tmp, 0, 0, null);
-		g2d.dispose();
+		final var g = o.createGraphics();
+		g.drawImage(tmp, 0, 0, null);
+		g.dispose();
 
-		return dimg;
+		return o;
 	}
 }
