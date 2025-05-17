@@ -7,12 +7,6 @@ import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 
-import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.io.jvm.AudioDispatcherFactory;
-import be.tarsos.dsp.pitch.PitchDetectionHandler;
-import be.tarsos.dsp.pitch.PitchDetectionResult;
-import be.tarsos.dsp.pitch.PitchProcessor;
-
 public class Audio {
 	public static class Wave {
 		final float volume;
@@ -32,22 +26,7 @@ public class Audio {
 	public static final float frequency = plugin.Plugin.tps();
 
 	public static Audio load(final File f) throws Exception {
-		final var dispatcher = AudioDispatcherFactory.fromFile(f, 1024, 0);
-		dispatcher.setZeroPadLastBuffer(true);
-
 		final var waves = new ArrayList<Wave>();
-
-		final var handler = new PitchDetectionHandler() {
-			@Override
-			public void handlePitch(final PitchDetectionResult pitchDetectionResult, final AudioEvent audioEvent) {
-				waves.add(new Wave(1, pitchDetectionResult.getPitch()));
-			}
-		};
-
-		dispatcher.addAudioProcessor(
-				new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 44100, 1024, handler));
-		dispatcher.run();
-
 		return new Audio(waves.toArray(Wave[]::new));
 	}
 

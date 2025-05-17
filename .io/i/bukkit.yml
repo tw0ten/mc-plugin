@@ -1,3 +1,4 @@
+aliases: now-in-commands.yml
 settings:
   world-container: worlds
   allow-end: true

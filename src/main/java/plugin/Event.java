@@ -21,12 +21,11 @@ public class Event implements Listener {
 
 	public Event() {
 		Plugin.s().getPluginManager().registerEvents(this, Plugin.i());
-		Plugin.s().getScheduler().scheduleSyncRepeatingTask(Plugin.i(), () -> {
-			this.tick(tick++);
-		}, 0, 1);
+		Plugin.s().getScheduler().scheduleSyncRepeatingTask(Plugin.i(), this::tick, 0, 1);
 	}
 
-	private void tick(final int tick) {
+	private void tick() {
+		final var tick = this.tick++;
 		for (final var p : Player.s())
 			if ((p.getTicksLived() + 1) % (int) (Plugin.tps() * 20) == 0)
 				if (!p.isDead() && p.getGameMode() == GameMode.SURVIVAL)

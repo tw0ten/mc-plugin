@@ -20,14 +20,13 @@ public class Library {
 	public static Book[] books() {
 		final var books = new ArrayList<Book>();
 		final var library = path().toFile();
-		for (final var author : library.listFiles()) {
-			if (author.isFile()) {
+		for (final var author : library.listFiles())
+			if (author.isFile())
 				books.add(loadBook(author.getName(), null));
-				continue;
-			}
-			for (final var title : author.listFiles())
-				books.add(loadBook(title.getName(), author.getName()));
-		}
+			else
+				for (final var title : author.listFiles())
+					if (title.isFile())
+						books.add(loadBook(title.getName(), author.getName()));
 		return books.toArray(Book[]::new);
 	}
 
