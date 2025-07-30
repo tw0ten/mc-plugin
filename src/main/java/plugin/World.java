@@ -39,6 +39,57 @@ public class World {
 		});
 	}
 
+	public static org.bukkit.World chunkShuffleWorld(final NamespacedKey key) {
+		final var wc = new WorldCreator(key);
+		wc.keepSpawnLoaded(TriState.FALSE);
+		wc.environment(Environment.NORMAL);
+		wc.generator(new ChunkGenerator() {
+			@Override
+			public void generateSurface(final WorldInfo worldInfo, final java.util.Random random, final int chunkX,
+					final int chunkZ,
+					final ChunkData chunkData) {
+			}
+
+			@Override
+			public void generateCaves(final WorldInfo worldInfo, final java.util.Random random, final int chunkX,
+					final int chunkZ,
+					final ChunkData chunkData) {
+			}
+
+			@Override
+			public void generateBedrock(final WorldInfo worldInfo, final java.util.Random random, final int chunkX,
+					final int chunkZ, final ChunkData chunkData) {
+				if (chunkX == 0 && chunkZ == 0)
+					chunkData.setBlock(0, 0, 0, Material.BEDROCK);
+			}
+
+			@Override
+			public boolean shouldGenerateStructures() {
+				return false;
+			}
+
+			@Override
+			public boolean shouldGenerateMobs() {
+				return false;
+			}
+		});
+		wc.biomeProvider(new BiomeProvider() {
+			@Override
+			public Biome getBiome(final WorldInfo worldInfo, final int x, final int y, final int z) {
+				return Biome.PLAINS;
+			}
+
+			@Override
+			public List<Biome> getBiomes(final WorldInfo worldInfo) {
+				return List.of();
+			}
+		});
+
+		final var w = wc.createWorld();
+
+		return w;
+	}
+
 	public static org.bukkit.World voidWorld(final NamespacedKey key) {
 		final var wc = new WorldCreator(key);
 		wc.keepSpawnLoaded(TriState.FALSE);
